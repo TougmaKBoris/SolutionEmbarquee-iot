@@ -6,6 +6,7 @@ import { CapteurData, CapteurDataDocument } from './entities/capteur-data.entity
 import { Machine, MachineDocument } from '../machines/entities/machine.entity';
 import { Alerte, AlerteDocument } from '../alertes/entities/alerte.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
+import { EmailsService } from '../emails/emails.service';
 
 @Injectable()
 export class CapteursService {
@@ -17,6 +18,7 @@ export class CapteursService {
     @InjectModel(Machine.name) private machineModel: Model<MachineDocument>,
     @InjectModel(Alerte.name) private alerteModel: Model<AlerteDocument>,
     @InjectModel(Seuil.name) private seuilModel: Model<SeuilDocument>,
+    private readonly emailsService: EmailsService,
   ) {}
 
   private genererValeur(type: string): { valeur: number; unite: string } {
@@ -38,7 +40,7 @@ export class CapteursService {
         const { valeur, unite } = this.genererValeur(type);
         const data = await this.capteurDataModel.create({ machine_id: machine._id, type, valeur, unite, timestamp: new Date() });
         readings.push({ type, valeur, unite, timestamp: data.timestamp });
-        await this.verifierSeuils(machine._id.toString(), type, valeur);
+        await this.verifierSeuils(machine._id.toString(), machine.nom, type, valeur);
       }
       this.liveData.set(machine._id.toString(), readings);
     }
@@ -54,8 +56,11 @@ export class CapteursService {
    * Le niveau (attention/critique) depend de l'ampleur de l'ecart :
    * - Ecart leger (≤ 15%) → attention
    * - Ecart important (> 15%) → critique
+   *
+   * Email envoye UNIQUEMENT quand une NOUVELLE alerte critique est creee
+   * (pas lors de la mise a jour d'une alerte existante).
    */
-  private async verifierSeuils(machineId: string, type: string, valeur: number) {
+  private async verifierSeuils(machineId: string, machineNom: string, type: string, valeur: number) {
     const seuil = await this.seuilModel.findOne({ machine_id: new Types.ObjectId(machineId), type_capteur: type }).exec();
     if (!seuil) return;
 
@@ -65,11 +70,13 @@ export class CapteursService {
     let niveau: string | null = null;
     let message: string = '';
     let seuilDepasse: number = 0;
+    let typeDepassement: 'sous_seuil' | 'au_dessus_max' = 'sous_seuil';
 
     // Cas 1 : Valeur sous le seuil minimum
     if (valeur < seuil.valeur_min) {
       const ecart = ((seuil.valeur_min - valeur) / seuil.valeur_min) * 100;
       seuilDepasse = seuil.valeur_min;
+      typeDepassement = 'sous_seuil';
       if (ecart > 15) {
         niveau = 'critique';
         message = `${type} critique : ${valeur} ${unite} (sous le seuil minimum ${seuil.valeur_min} ${unite})`;
@@ -82,6 +89,7 @@ export class CapteursService {
     else if (valeur > seuil.valeur_max) {
       const ecart = ((valeur - seuil.valeur_max) / seuil.valeur_max) * 100;
       seuilDepasse = seuil.valeur_max;
+      typeDepassement = 'au_dessus_max';
       if (ecart > 15) {
         niveau = 'critique';
         message = `${type} critique : ${valeur} ${unite} (au-dessus du seuil maximum ${seuil.valeur_max} ${unite})`;
@@ -93,7 +101,6 @@ export class CapteursService {
     // Cas 3 : Valeur dans la plage normale → pas d'alerte
 
     if (niveau) {
-      // Verifier s'il existe deja une alerte non resolue pour ce capteur sur cette machine
       const alerteExistante = await this.alerteModel.findOne({
         machine_id: new Types.ObjectId(machineId),
         type_capteur: type,
@@ -101,14 +108,14 @@ export class CapteursService {
       }).exec();
 
       if (alerteExistante) {
-        // Mettre a jour l'alerte existante
+        // Mise a jour d'une alerte existante - PAS d'email
         alerteExistante.valeur = valeur;
         alerteExistante.seuil_depasse = seuilDepasse;
         alerteExistante.niveau = niveau;
         alerteExistante.message = message;
         await alerteExistante.save();
       } else {
-        // Creer une nouvelle alerte
+        // NOUVELLE alerte - email envoye uniquement si niveau critique
         await this.alerteModel.create({
           machine_id: new Types.ObjectId(machineId),
           type_capteur: type,
@@ -118,6 +125,21 @@ export class CapteursService {
           message,
           resolue: false,
         });
+
+        if (niveau === 'critique') {
+          this.emailsService.envoyerAlerteCritique({
+            machineNom,
+            typeCapteur: type,
+            valeur,
+            unite,
+            seuilFranchi: seuilDepasse,
+            typeDepassement,
+            message,
+            timestamp: new Date(),
+          }).catch(err => {
+            this.logger.error(`Erreur envoi email alerte critique : ${err.message}`);
+          });
+        }
       }
     }
   }

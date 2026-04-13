@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import utiliserMachines from '../crochets/utiliserMachines';
 import api from '../services/api';
 import { Seuil } from '../types';
-import { Save, Info } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 const LABELS: Record<string, string> = { temperature: 'Température (°C)', courant: 'Courant (A)', vibration: 'Vibration (g)', pression: 'Pression (bar)' };
 const COULEURS: Record<string, string> = { temperature: '#EF4444', courant: '#3B82F6', vibration: '#F59E0B', pression: '#10B981' };
@@ -40,13 +40,7 @@ export default function PageSeuils() {
         </select>
       </div>
 
-      {/* Encart explicatif */}
-      <div style={{ padding: '12px 16px', background: '#EFF6FF', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid #DBEAFE', marginBottom: 20 }}>
-        <Info size={16} color="#2563EB" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div style={{ fontSize: 12, color: '#1E40AF', lineHeight: 1.6 }}>
-          Toute valeur sortant de la plage <b>[Valeur minimale — Valeur maximale]</b> est consideree comme anormale et declenche une alerte. Le niveau de gravite (attention ou critique) est determine par l'ampleur de l'ecart par rapport au seuil.
-        </div>
-      </div>
+  
 
       {message && (
         <div style={{ background: '#F0FDF4', color: '#16A34A', padding: '12px 16px', borderRadius: 8, fontSize: 14, fontWeight: 500, marginBottom: 16, border: '1px solid #BBF7D0' }}>{message}</div>

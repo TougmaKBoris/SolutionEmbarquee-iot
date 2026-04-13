@@ -13,6 +13,7 @@ import { SeuilsModule } from './seuils/seuils.module';
 import { IaModule } from './ia/ia.module';
 import { InitialisationModule } from './common/initialisation/initialisation.module';
 import { EvenementsModule } from './evenements/evenements.module';
+import { EmailsModule } from './emails/emails.module';
 
 @Module({
   imports: [
@@ -28,8 +29,9 @@ import { EvenementsModule } from './evenements/evenements.module';
     AlertesModule,
     SeuilsModule,
     IaModule,
-  InitialisationModule,
-  EvenementsModule,
+   InitialisationModule,
+   EvenementsModule,
+   EmailsModule,
   ],
 })
 export class AppModule {}
