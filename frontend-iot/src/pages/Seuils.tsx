@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import utiliserMachines from '../crochets/utiliserMachines';
 import api from '../services/api';
 import { Seuil } from '../types';
-import { Save } from 'lucide-react';
+import { Save, Info } from 'lucide-react';
 
 const LABELS: Record<string, string> = { temperature: 'Température (°C)', courant: 'Courant (A)', vibration: 'Vibration (g)', pression: 'Pression (bar)' };
 const COULEURS: Record<string, string> = { temperature: '#EF4444', courant: '#3B82F6', vibration: '#F59E0B', pression: '#10B981' };
@@ -23,24 +23,33 @@ export default function PageSeuils() {
   const sauvegarder = async () => {
     try {
       for (const s of seuils) await api.put(`/seuils/${machineId}/${s.type_capteur}`, { valeur_min: s.valeur_min, valeur_max: s.valeur_max });
-      setMessage('Seuils enregistrés avec succès'); setTimeout(() => setMessage(''), 3000);
+      setMessage('Seuils enregistres avec succes');
+      setTimeout(() => setMessage(''), 3000);
     } catch { setMessage('Erreur lors de la sauvegarde'); }
   };
 
   return (
     <div style={{ maxWidth: 1200 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Configuration des seuils</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Définir les limites d'alerte par capteur</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700 }}>Configuration des seuils</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Definir la plage de fonctionnement nominal par capteur</p>
         </div>
-        <select value={machineId} onChange={e => setMachineId(e.target.value)} style={{ width: 180 }}>
+        <select value={machineId} onChange={e => setMachineId(e.target.value)} style={{ width: 180, padding: '8px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13 }}>
           {machines.map(m => <option key={m._id} value={m._id}>{m.nom}</option>)}
         </select>
       </div>
 
+      {/* Encart explicatif */}
+      <div style={{ padding: '12px 16px', background: '#EFF6FF', borderRadius: 10, display: 'flex', alignItems: 'flex-start', gap: 10, border: '1px solid #DBEAFE', marginBottom: 20 }}>
+        <Info size={16} color="#2563EB" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div style={{ fontSize: 12, color: '#1E40AF', lineHeight: 1.6 }}>
+          Toute valeur sortant de la plage <b>[Valeur minimale — Valeur maximale]</b> est consideree comme anormale et declenche une alerte. Le niveau de gravite (attention ou critique) est determine par l'ampleur de l'ecart par rapport au seuil.
+        </div>
+      </div>
+
       {message && (
-        <div style={{ background: '#F0FDF4', color: '#16A34A', padding: '12px 16px', borderRadius: 8, fontSize: 14, fontWeight: 500, marginBottom: 16 }}>{message}</div>
+        <div style={{ background: '#F0FDF4', color: '#16A34A', padding: '12px 16px', borderRadius: 8, fontSize: 14, fontWeight: 500, marginBottom: 16, border: '1px solid #BBF7D0' }}>{message}</div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -49,12 +58,14 @@ export default function PageSeuils() {
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14, color: COULEURS[s.type_capteur] || '#0F172A' }}>{LABELS[s.type_capteur] || s.type_capteur}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#64748B', fontWeight: 500, marginBottom: 4 }}>Seuil attention</label>
-                <input type="number" step="0.1" value={s.valeur_min} onChange={e => modifier(i, 'valeur_min', e.target.value)} />
+                <label style={{ display: 'block', fontSize: 12, color: '#64748B', fontWeight: 500, marginBottom: 4 }}>Valeur minimale</label>
+                <input type="number" step="0.1" value={s.valeur_min} onChange={e => modifier(i, 'valeur_min', e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13, background: '#F8FAFC' }} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 12, color: '#64748B', fontWeight: 500, marginBottom: 4 }}>Seuil critique</label>
-                <input type="number" step="0.1" value={s.valeur_max} onChange={e => modifier(i, 'valeur_max', e.target.value)} />
+                <label style={{ display: 'block', fontSize: 12, color: '#64748B', fontWeight: 500, marginBottom: 4 }}>Valeur maximale</label>
+                <input type="number" step="0.1" value={s.valeur_max} onChange={e => modifier(i, 'valeur_max', e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13, background: '#F8FAFC' }} />
               </div>
             </div>
           </div>

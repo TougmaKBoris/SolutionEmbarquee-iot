@@ -45,18 +45,55 @@ export class CapteursService {
     this.logger.debug(`Donnees simulees pour ${machines.length} machine(s)`);
   }
 
+  /**
+   * Logique bidirectionnelle de detection d'alertes :
+   * - Valeur < valeur_min → Alerte (sous le seuil minimum)
+   * - Valeur > valeur_max → Alerte (au-dessus du seuil maximum)
+   * - Valeur dans [min, max] → Pas d'alerte (zone normale)
+   *
+   * Le niveau (attention/critique) depend de l'ampleur de l'ecart :
+   * - Ecart leger (≤ 15%) → attention
+   * - Ecart important (> 15%) → critique
+   */
   private async verifierSeuils(machineId: string, type: string, valeur: number) {
     const seuil = await this.seuilModel.findOne({ machine_id: new Types.ObjectId(machineId), type_capteur: type }).exec();
     if (!seuil) return;
 
-    let niveau: string | null = null;
-    if (valeur >= seuil.valeur_max) niveau = 'critique';
-    else if (valeur >= seuil.valeur_min && Math.random() < 0.3) niveau = 'attention';
-
     const unites: Record<string, string> = { temperature: '°C', courant: 'A', vibration: 'g', pression: 'bar' };
+    const unite = unites[type] || '';
+
+    let niveau: string | null = null;
+    let message: string = '';
+    let seuilDepasse: number = 0;
+
+    // Cas 1 : Valeur sous le seuil minimum
+    if (valeur < seuil.valeur_min) {
+      const ecart = ((seuil.valeur_min - valeur) / seuil.valeur_min) * 100;
+      seuilDepasse = seuil.valeur_min;
+      if (ecart > 15) {
+        niveau = 'critique';
+        message = `${type} critique : ${valeur} ${unite} (sous le seuil minimum ${seuil.valeur_min} ${unite})`;
+      } else {
+        niveau = 'attention';
+        message = `${type} anormale : ${valeur} ${unite} (sous le seuil minimum ${seuil.valeur_min} ${unite})`;
+      }
+    }
+    // Cas 2 : Valeur au-dessus du seuil maximum
+    else if (valeur > seuil.valeur_max) {
+      const ecart = ((valeur - seuil.valeur_max) / seuil.valeur_max) * 100;
+      seuilDepasse = seuil.valeur_max;
+      if (ecart > 15) {
+        niveau = 'critique';
+        message = `${type} critique : ${valeur} ${unite} (au-dessus du seuil maximum ${seuil.valeur_max} ${unite})`;
+      } else {
+        niveau = 'attention';
+        message = `${type} anormale : ${valeur} ${unite} (au-dessus du seuil maximum ${seuil.valeur_max} ${unite})`;
+      }
+    }
+    // Cas 3 : Valeur dans la plage normale → pas d'alerte
 
     if (niveau) {
-      // Vérifier s'il existe déjà une alerte non résolue pour ce capteur sur cette machine
+      // Verifier s'il existe deja une alerte non resolue pour ce capteur sur cette machine
       const alerteExistante = await this.alerteModel.findOne({
         machine_id: new Types.ObjectId(machineId),
         type_capteur: type,
@@ -64,21 +101,21 @@ export class CapteursService {
       }).exec();
 
       if (alerteExistante) {
-        // Mettre à jour l'alerte existante avec la nouvelle valeur
+        // Mettre a jour l'alerte existante
         alerteExistante.valeur = valeur;
-        alerteExistante.seuil_depasse = niveau === 'critique' ? seuil.valeur_max : seuil.valeur_min;
+        alerteExistante.seuil_depasse = seuilDepasse;
         alerteExistante.niveau = niveau;
-        alerteExistante.message = `${type} ${niveau === 'critique' ? 'critique' : 'anormale'} : ${valeur} ${unites[type] || ''}`;
+        alerteExistante.message = message;
         await alerteExistante.save();
       } else {
-        // Créer une nouvelle alerte
+        // Creer une nouvelle alerte
         await this.alerteModel.create({
           machine_id: new Types.ObjectId(machineId),
           type_capteur: type,
           valeur,
-          seuil_depasse: niveau === 'critique' ? seuil.valeur_max : seuil.valeur_min,
+          seuil_depasse: seuilDepasse,
           niveau,
-          message: `${type} ${niveau === 'critique' ? 'critique' : 'anormale'} : ${valeur} ${unites[type] || ''}`,
+          message,
           resolue: false,
         });
       }
