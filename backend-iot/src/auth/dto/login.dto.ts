@@ -5,6 +5,6 @@ export class LoginDto {
   email: string;
 
   @IsString()
-  @MinLength(3)
+  @MinLength(6)
   mot_de_passe: string;
 }

@@ -7,7 +7,6 @@ import { Download, Activity, AlertOctagon, RotateCw, Settings, CheckCircle, Powe
 const COULEURS: Record<string, string> = { temperature: '#E24B4A', courant: '#378ADD', vibration: '#EF9F27', pression: '#639922' };
 const LABELS: Record<string, string> = { temperature: 'Température', courant: 'Courant', vibration: 'Vibration', pression: 'Pression' };
 const UNITES: Record<string, string> = { temperature: '°C', courant: 'A', vibration: 'g', pression: 'bar' };
-const SEUILS: Record<string, [number, number]> = { temperature: [70, 88], courant: [4.5, 5.5], vibration: [0.8, 1.1], pression: [4.0, 5.0] };
 
 export default function PageHistorique() {
   const { machines } = utiliserMachines();
@@ -15,11 +14,25 @@ export default function PageHistorique() {
   const [periode, setPeriode] = useState('24h');
   const [donneesParType, setDonneesParType] = useState<Record<string, CapteurData[]>>({});
   const [evenements, setEvenements] = useState<any[]>([]);
+  const [seuilsParType, setSeuilsParType] = useState<Record<string, [number, number]>>({});
 
   const machineSelectionnee = machines.find(m => m._id === machineId);
   const capteursMachine = machineSelectionnee?.capteurs || [];
 
   useEffect(() => { if (machines.length > 0 && !machineId) setMachineId(machines[0]._id); }, [machines]);
+
+  useEffect(() => {
+    if (!machineId) return;
+    api.get(`/seuils?machine_id=${machineId}`)
+      .then(res => {
+        const map: Record<string, [number, number]> = {};
+        for (const s of res.data) {
+          map[s.type_capteur] = [s.valeur_min, s.valeur_max];
+        }
+        setSeuilsParType(map);
+      })
+      .catch(() => setSeuilsParType({}));
+  }, [machineId]);
 
   useEffect(() => {
     if (!machineId || capteursMachine.length === 0) return;
@@ -58,7 +71,7 @@ export default function PageHistorique() {
     for (const type of capteursMachine) {
       const donnees = donneesParType[type] || [];
       for (const d of donnees) {
-        const seuil = SEUILS[type];
+        const seuil = seuilsParType[type];
         let statut = 'normal';
         if (seuil) {
           if (d.valeur >= seuil[1]) statut = 'critique';
@@ -140,7 +153,7 @@ export default function PageHistorique() {
           const donnees = (donneesParType[type] || []).slice(0, 18);
           const s = stats(donneesParType[type] || []);
           const couleur = COULEURS[type] || '#64748B';
-          const seuil = SEUILS[type];
+          const seuil = seuilsParType[type];
           const valeurMax = donnees.length > 0 ? Math.max(...donnees.map(d => d.valeur), seuil ? seuil[1] * 1.1 : 100) : 100;
 
           return (

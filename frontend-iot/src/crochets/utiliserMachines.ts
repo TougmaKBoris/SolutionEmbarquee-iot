@@ -17,7 +17,11 @@ export default function utiliserMachines() {
     }
   };
 
-  useEffect(() => { charger(); }, []);
+  useEffect(() => {
+    charger();
+    const interval = setInterval(charger, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   return { machines, chargement, rafraichir: charger };
 }

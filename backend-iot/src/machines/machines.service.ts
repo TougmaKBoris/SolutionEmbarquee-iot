@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Machine, MachineDocument } from './entities/machine.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { Actionneur, ActionneurDocument } from '../actionneurs/entities/actionneur.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
 import { Alerte, AlerteDocument } from '../alertes/entities/alerte.entity';
+import { Affectation, AffectationDocument } from '../affectations/entities/affectation.entity';
+import { CapteurData, CapteurDataDocument } from '../capteurs/entities/capteur-data.entity';
+import { Evenement, EvenementDocument } from '../evenements/entities/evenement.entity';
 import { EvenementsService } from '../evenements/evenements.service';
 
 @Injectable()
@@ -23,6 +26,9 @@ export class MachinesService {
     @InjectModel(Actionneur.name) private actionneurModel: Model<ActionneurDocument>,
     @InjectModel(Seuil.name) private seuilModel: Model<SeuilDocument>,
     @InjectModel(Alerte.name) private alerteModel: Model<AlerteDocument>,
+    @InjectModel(Affectation.name) private affectationModel: Model<AffectationDocument>,
+    @InjectModel(CapteurData.name) private capteurDataModel: Model<CapteurDataDocument>,
+    @InjectModel(Evenement.name) private evenementModel: Model<EvenementDocument>,
     private readonly evenementsService: EvenementsService,
   ) {}
 
@@ -60,8 +66,15 @@ export class MachinesService {
   async remove(id: string) {
     const result = await this.machineModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Machine non trouvee');
-    await this.actionneurModel.deleteMany({ machine_id: id }).exec();
-    await this.seuilModel.deleteMany({ machine_id: id }).exec();
+    const mid = new Types.ObjectId(id);
+    await Promise.all([
+      this.actionneurModel.deleteMany({ machine_id: mid }).exec(),
+      this.seuilModel.deleteMany({ machine_id: mid }).exec(),
+      this.affectationModel.deleteMany({ machine_id: mid }).exec(),
+      this.alerteModel.deleteMany({ machine_id: mid }).exec(),
+      this.capteurDataModel.deleteMany({ machine_id: mid }).exec(),
+      this.evenementModel.deleteMany({ machine_id: mid }).exec(),
+    ]);
     return { message: 'Machine supprimee' };
   }
 

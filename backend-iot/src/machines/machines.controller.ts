@@ -29,7 +29,7 @@ export class MachinesController {
   @Patch(':id/mode') @Roles('admin', 'responsable_maintenance')
   changerMode(@Param('id') id: string, @Body('mode') mode: string, @Req() req: any) {
     const utilisateur = {
-      id: req.user?.sub || req.user?.id,
+      id: req.user?.userId,
       nom: req.user?.nom || 'Utilisateur',
       role: req.user?.role || 'inconnu',
     };
@@ -39,7 +39,7 @@ export class MachinesController {
   @Post(':id/arret-urgence')
   arretUrgence(@Param('id') id: string, @Req() req: any) {
     const utilisateur = {
-      id: req.user?.sub || req.user?.id,
+      id: req.user?.userId,
       nom: req.user?.nom || 'Utilisateur inconnu',
       role: req.user?.role || 'inconnu',
     };
@@ -49,7 +49,7 @@ export class MachinesController {
   @Post(':id/redemarrer') @Roles('admin', 'responsable_maintenance')
   redemarrer(@Param('id') id: string, @Req() req: any) {
     const utilisateur = {
-      id: req.user?.sub || req.user?.id,
+      id: req.user?.userId,
       nom: req.user?.nom || 'Utilisateur',
       role: req.user?.role || 'inconnu',
     };

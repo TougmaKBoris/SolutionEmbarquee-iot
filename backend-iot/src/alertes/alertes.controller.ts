@@ -25,7 +25,7 @@ export class AlertesController {
   @Roles('admin', 'responsable_maintenance')
   resoudre(@Param('id') id: string, @Req() req: any) {
     const utilisateur = {
-      id: req.user?.sub || req.user?.id,
+      id: req.user?.userId,
       nom: req.user?.nom || 'Utilisateur',
       role: req.user?.role || 'inconnu',
     };
@@ -37,7 +37,7 @@ export class AlertesController {
   @Roles('admin', 'responsable_maintenance')
   ignorer(@Param('id') id: string, @Req() req: any) {
     const utilisateur = {
-      id: req.user?.sub || req.user?.id,
+      id: req.user?.userId,
       nom: req.user?.nom || 'Utilisateur',
       role: req.user?.role || 'inconnu',
     };
