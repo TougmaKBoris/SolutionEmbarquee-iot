@@ -55,7 +55,12 @@ export default function Dashboard() {
   const { capteurs } = utiliserCapteurs(machineId);
   const { alertes, resoudre, ignorer, supprimer } = utiliserAlertes(machineId || undefined);
   const machineSelectionnee = machines.find((m: any) => m._id === machineId);
-  const now = new Date();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const etatActuel = machineId ? machinesEtat[machineId] : null;
   const modeActuel = etatActuel?.mode || 'auto';
