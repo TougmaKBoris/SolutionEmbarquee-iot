@@ -10,6 +10,7 @@ import { Affectation, AffectationSchema } from '../affectations/entities/affecta
 import { CapteurData, CapteurDataSchema } from '../capteurs/entities/capteur-data.entity';
 import { Evenement, EvenementSchema } from '../evenements/entities/evenement.entity';
 import { EvenementsModule } from '../evenements/evenements.module';
+import { MachineSupprimee, MachineSupprimeeSchema } from '../common/initialisation/machine-supprimee.schema';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EvenementsModule } from '../evenements/evenements.module';
       { name: Affectation.name, schema: AffectationSchema },
       { name: CapteurData.name, schema: CapteurDataSchema },
       { name: Evenement.name, schema: EvenementSchema },
+      { name: MachineSupprimee.name, schema: MachineSupprimeeSchema },
     ]),
     EvenementsModule,
   ],

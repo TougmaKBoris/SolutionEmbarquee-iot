@@ -15,6 +15,8 @@ import { IaModule } from './ia/ia.module';
 import { InitialisationModule } from './common/initialisation/initialisation.module';
 import { EvenementsModule } from './evenements/evenements.module';
 import { EmailsModule } from './emails/emails.module';
+import { TempsReelModule } from './temps-reel/temps-reel.module';
+import { MqttModule } from './mqtt/mqtt.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { EmailsModule } from './emails/emails.module';
     MongooseModule.forRoot(process.env.MONGODB_URI),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
+    TempsReelModule,
+    MqttModule,
     AuthModule,
     MachinesModule,
     CapteursModule,
@@ -37,3 +41,4 @@ import { EmailsModule } from './emails/emails.module';
   ],
 })
 export class AppModule {}
+

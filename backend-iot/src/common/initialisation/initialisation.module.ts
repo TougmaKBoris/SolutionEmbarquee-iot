@@ -6,6 +6,7 @@ import { Machine, MachineSchema } from '../../machines/entities/machine.entity';
 import { Seuil, SeuilSchema } from '../../seuils/entities/seuil.entity';
 import { Actionneur, ActionneurSchema } from '../../actionneurs/entities/actionneur.entity';
 import { Affectation, AffectationSchema } from '../../affectations/entities/affectation.entity';
+import { MachineSupprimee, MachineSupprimeeSchema } from './machine-supprimee.schema';
 
 @Module({
   imports: [
@@ -15,8 +16,10 @@ import { Affectation, AffectationSchema } from '../../affectations/entities/affe
       { name: Seuil.name, schema: SeuilSchema },
       { name: Actionneur.name, schema: ActionneurSchema },
       { name: Affectation.name, schema: AffectationSchema },
+      { name: MachineSupprimee.name, schema: MachineSupprimeeSchema },
     ]),
   ],
   providers: [InitialisationService],
+  exports: [MongooseModule],
 })
 export class InitialisationModule {}

@@ -101,6 +101,72 @@ export class IaService {
     }
   }
 
+  async getTendances(machineId: string) {
+    const machine = await this.machineModel.findById(machineId).exec();
+    if (!machine) return { erreur: 'Machine non trouvee' };
+
+    const seuilsMachine = await this.getSeuilsParMachine(machineId);
+    const types = ['temperature', 'courant', 'vibration', 'pression'];
+    const tendances = [];
+
+    for (const type of types) {
+      const lectures = await this.capteurDataModel
+        .find({ machine_id: machineId, type })
+        .sort({ timestamp: 1 })
+        .limit(20)
+        .exec();
+
+      if (lectures.length < 3) continue;
+
+      const seuil = seuilsMachine[type];
+      if (!seuil) continue;
+
+      const n = lectures.length;
+      const t0 = new Date(lectures[0].timestamp).getTime();
+      const xs = lectures.map(l => (new Date(l.timestamp).getTime() - t0) / 60000);
+      const ys = lectures.map(l => l.valeur);
+
+      const xMean = xs.reduce((a, b) => a + b, 0) / n;
+      const yMean = ys.reduce((a, b) => a + b, 0) / n;
+      const num = xs.reduce((sum, x, i) => sum + (x - xMean) * (ys[i] - yMean), 0);
+      const den = xs.reduce((sum, x) => sum + (x - xMean) ** 2, 0);
+      const pente = den !== 0 ? num / den : 0;
+
+      const valeurActuelle = ys[n - 1];
+      let tempsAvantSeuilMinutes: number | null = null;
+      let typeDepassement: 'max' | 'min' | null = null;
+
+      if (pente > 0.001 && seuil.max && valeurActuelle < seuil.max) {
+        tempsAvantSeuilMinutes = Math.round((seuil.max - valeurActuelle) / pente);
+        typeDepassement = 'max';
+      } else if (pente < -0.001 && seuil.min && valeurActuelle > seuil.min) {
+        tempsAvantSeuilMinutes = Math.round((valeurActuelle - seuil.min) / Math.abs(pente));
+        typeDepassement = 'min';
+      }
+
+      tendances.push({
+        capteur: type,
+        valeurs: lectures.map(l => ({ timestamp: l.timestamp, valeur: l.valeur })),
+        valeurActuelle,
+        seuilMin: seuil.min,
+        seuilMax: seuil.max,
+        unite: lectures[0].unite,
+        penteParMinute: Math.round(pente * 1000) / 1000,
+        direction: pente > 0.001 ? 'hausse' : pente < -0.001 ? 'baisse' : 'stable',
+        tempsAvantSeuilMinutes,
+        typeDepassement,
+        alertePrecoce: tempsAvantSeuilMinutes !== null && tempsAvantSeuilMinutes < 120,
+      });
+    }
+
+    return {
+      machine_id: machineId,
+      machine_nom: machine.nom,
+      timestamp: new Date(),
+      tendances,
+    };
+  }
+
   async getHistoriquePannes() {
     const alertes = await this.alerteModel
       .find({ resolue: true })
