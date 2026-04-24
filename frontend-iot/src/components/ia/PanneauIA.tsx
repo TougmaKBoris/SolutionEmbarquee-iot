@@ -29,9 +29,9 @@ export default function PanneauIA({ analyse, onVoirDetails }: Props) {
   if (niveau === 'normal') return null;
 
   const estCritique = niveau === 'critique';
-  const couleurs = estCritique
-    ? { fond: '#FCEBEB', bordure: '#F09595', barre: '#E24B4A', fondIcone: '#E24B4A', titre: '#791F1F', texte: '#A32D2D', label: 'Critique' }
-    : { fond: '#FAEEDA', bordure: '#FAC775', barre: '#BA7517', fondIcone: '#BA7517', titre: '#412402', texte: '#854F0B', label: 'Attention' };
+  const accentColor = estCritique ? '#DC2626' : '#D97706';
+  const iconeColor = estCritique ? '#DC2626' : '#D97706';
+  const labelText = estCritique ? 'Critique' : 'Attention';
 
   const cause = machineAnalyse.causes && machineAnalyse.causes.length > 0
     ? machineAnalyse.causes[0].description
@@ -40,21 +40,19 @@ export default function PanneauIA({ analyse, onVoirDetails }: Props) {
   const Icone = estCritique ? AlertOctagon : AlertTriangle;
 
   return (
-    <div style={{ background: couleurs.fond, border: `0.5px solid ${couleurs.bordure}`, borderLeft: `3px solid ${couleurs.barre}`, borderRadius: '0 10px 10px 0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: couleurs.fondIcone, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icone size={16} color="#fff" />
-        </div>
+    <div style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', borderLeft: `4px solid ${accentColor}`, borderRadius: '0 8px 8px 0', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+        <Icone size={16} color={iconeColor} style={{ flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: couleurs.texte, textTransform: 'uppercase', letterSpacing: 0.5 }}>Analyse IA</span>
-            <span style={{ padding: '2px 8px', background: couleurs.barre, color: '#fff', fontSize: 10, fontWeight: 600, borderRadius: 10 }}>{couleurs.label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Analyse IA</span>
+            <span style={{ padding: '1px 6px', background: accentColor, color: '#fff', fontSize: 10, fontWeight: 600, borderRadius: 8 }}>{labelText}</span>
           </div>
-          <div style={{ fontSize: 12, color: couleurs.titre }}>{cause}</div>
+          <div style={{ fontSize: 12, color: '#0F172A', fontWeight: 500 }}>{cause}</div>
         </div>
       </div>
       {onVoirDetails && (
-        <button onClick={onVoirDetails} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', background: '#fff', color: couleurs.texte, border: `0.5px solid ${couleurs.barre}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        <button onClick={onVoirDetails} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 12px', background: '#fff', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
           Voir l'analyse <ArrowRight size={12} />
         </button>
       )}

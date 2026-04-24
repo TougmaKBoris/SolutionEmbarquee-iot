@@ -64,38 +64,38 @@ export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprim
         {alertes.slice(0, limite).map(a => {
           const critique = a.niveau === 'critique';
           return (
-            <div key={a._id} style={{ padding: '12px 14px', borderRadius: 10, background: critique ? '#FEF2F2' : '#FFFBEB', borderLeft: `4px solid ${critique ? '#DC2626' : '#D97706'}` }}>
+            <div key={a._id} style={{ padding: '10px 14px', borderRadius: '0 8px 8px 0', background: '#fff', borderLeft: `4px solid ${critique ? '#DC2626' : '#D97706'}`, borderTop: '1px solid #E2E8F0', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    {critique ? <AlertCircle size={15} color="#DC2626" /> : <AlertTriangle size={15} color="#D97706" />}
-                    <span style={{ fontSize: 13, fontWeight: 600, color: critique ? '#991B1B' : '#92400E' }}>{a.message}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    {critique ? <AlertCircle size={14} color="#DC2626" /> : <AlertTriangle size={14} color="#D97706" />}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{a.message}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>{a.machine_id?.nom || 'Machine'} — {tempsEcoule(a.createdAt)}</div>
+                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500, marginLeft: 20 }}>{a.machine_id?.nom || 'Machine'} — {tempsEcoule(a.createdAt)}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                  <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 10, background: critique ? '#DC2626' : '#D97706', color: '#fff', fontWeight: 600 }}>{a.niveau}</span>
+                  <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 8, background: critique ? '#DC2626' : '#D97706', color: '#fff', fontWeight: 600 }}>{a.niveau}</span>
                   {peutResoudre && (
                     <>
                       {onResoudre && (
                         <button onClick={() => onResoudre(a._id)} title="Résoudre"
-                          style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', cursor: 'pointer', fontWeight: 600 }}>
+                          style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', cursor: 'pointer', fontWeight: 600 }}>
                           Résoudre
                         </button>
                       )}
                       {onIgnorer && (
                         <button onClick={() => onIgnorer(a._id)} title="Ignorer"
-                          style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, background: '#F1F5F9', border: '1px solid #E2E8F0', color: '#64748B', cursor: 'pointer', fontWeight: 500 }}>
+                          style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#F1F5F9', border: '1px solid #E2E8F0', color: '#475569', cursor: 'pointer', fontWeight: 600 }}>
                           Ignorer
                         </button>
                       )}
-                      {onSupprimer && (
-                        <button onClick={() => setConfirmer(a._id)} title="Supprimer"
-                          style={{ padding: '5px 7px', borderRadius: 6, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                          <X size={14} />
-                        </button>
-                      )}
                     </>
+                  )}
+                  {onSupprimer && (
+                    <button onClick={() => setConfirmer(a._id)} title="Supprimer"
+                      style={{ padding: '3px', borderRadius: 6, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <X size={14} />
+                    </button>
                   )}
                 </div>
               </div>
