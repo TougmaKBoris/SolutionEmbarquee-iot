@@ -27,7 +27,7 @@ export default function PageUtilisateurs() {
     catch (err: any) { setConfirmerSuppression(null); alert(err.response?.data?.message || 'Erreur'); }
   };
 
-  const utilisateurASupprimer = utilisateurs.find(u => (u._id || u.id) === confirmerSuppression);
+  const utilisateurASupprimer = utilisateurs.find(u => u._id === confirmerSuppression);
 
   const nbAdmin = utilisateurs.filter(u => u.role === 'admin').length;
   const nbResp = utilisateurs.filter(u => u.role === 'responsable_maintenance').length;
@@ -135,7 +135,7 @@ export default function PageUtilisateurs() {
           const Ic = ICONES[u.role] || User;
           const couleur = COULEURS[u.role] || '#666';
           return (
-            <div key={u._id || u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div key={u._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: couleur, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 600, flexShrink: 0 }}>
                   {u.nom.substring(0, 2).toUpperCase()}
@@ -150,7 +150,7 @@ export default function PageUtilisateurs() {
                   <Ic size={13} /> {u.role.replace('_', ' ')}
                 </span>
                 {u.role !== 'admin' && (
-                  <button onClick={() => setConfirmerSuppression(u._id || u.id)} title="Supprimer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer' }}>
+                  <button onClick={() => setConfirmerSuppression(u._id)} title="Supprimer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer' }}>
                     <Trash2 size={16} />
                   </button>
                 )}

@@ -131,7 +131,7 @@ export default function PageAffectations() {
             <select value={operateurId} onChange={e => setOperateurId(e.target.value)}>
               <option value="">Sélectionner un opérateur</option>
               {operateurs.map(o => (
-                <option key={o._id || o.id} value={o._id || o.id}>{o.nom} ({o.email})</option>
+                <option key={o._id} value={o._id}>{o.nom} ({o.email})</option>
               ))}
             </select>
             <select value={machineId} onChange={e => setMachineId(e.target.value)}>
