@@ -14,16 +14,6 @@ export class CapteursService {
   private readonly logger = new Logger(CapteursService.name);
   private liveData: Map<string, any[]> = new Map();
   private compteursEtat: Map<string, number> = new Map();
-  private emailCooldowns: Map<string, number> = new Map();
-  private readonly EMAIL_COOLDOWN_MS = 30 * 60 * 1000;
-
-  private peutEnvoyerEmail(machineId: string, typeCapteur: string): boolean {
-    const cle = `${machineId}:${typeCapteur}`;
-    const dernier = this.emailCooldowns.get(cle) ?? 0;
-    if (Date.now() - dernier < this.EMAIL_COOLDOWN_MS) return false;
-    this.emailCooldowns.set(cle, Date.now());
-    return true;
-  }
 
   constructor(
     @InjectModel(CapteurData.name) private capteurDataModel: Model<CapteurDataDocument>,
@@ -152,25 +142,21 @@ export class CapteursService {
         alerteExistante.seuil_depasse = seuilDepasse;
         alerteExistante.niveau = niveau;
         alerteExistante.message = message;
-        await alerteExistante.save();
 
-        // Email si escalade attention → critique (avec cooldown)
-        if (niveau === 'critique' && ancienNiveau !== 'critique' && this.peutEnvoyerEmail(machineId, type)) {
+        // Email uniquement si escalade vers critique ET aucun email déjà envoyé sur cette alerte
+        if (niveau === 'critique' && ancienNiveau !== 'critique' && !alerteExistante.email_envoye) {
+          alerteExistante.email_envoye = true;
+          await alerteExistante.save();
           this.emailsService.envoyerAlerteCritique({
-            machineNom,
-            typeCapteur: type,
-            valeur,
-            unite,
-            seuilFranchi: seuilDepasse,
-            typeDepassement,
-            message,
-            timestamp: new Date(),
-          }).catch(err => {
-            this.logger.error(`Erreur envoi email alerte critique (escalade) : ${err.message}`);
-          });
+            machineNom, typeCapteur: type, valeur, unite,
+            seuilFranchi: seuilDepasse, typeDepassement, message, timestamp: new Date(),
+          }).catch(err => this.logger.error(`Erreur email escalade : ${err.message}`));
+        } else {
+          await alerteExistante.save();
         }
       } else {
-        // NOUVELLE alerte - email si niveau critique
+        // Nouvelle alerte
+        const doitEnvoyerEmail = niveau === 'critique';
         const alerte = await this.alerteModel.create({
           machine_id: new Types.ObjectId(machineId),
           type_capteur: type,
@@ -179,25 +165,17 @@ export class CapteursService {
           niveau,
           message,
           resolue: false,
+          email_envoye: doitEnvoyerEmail,
         });
 
-        // Emettre la nouvelle alerte via Socket.IO
         this.tempsReelGateway.emitToMachine(machineId, 'alerte:nouvelle', alerte);
         this.tempsReelGateway.emitToAll('alerte:nouvelle', alerte);
 
-        if (niveau === 'critique' && this.peutEnvoyerEmail(machineId, type)) {
+        if (doitEnvoyerEmail) {
           this.emailsService.envoyerAlerteCritique({
-            machineNom,
-            typeCapteur: type,
-            valeur,
-            unite,
-            seuilFranchi: seuilDepasse,
-            typeDepassement,
-            message,
-            timestamp: new Date(),
-          }).catch(err => {
-            this.logger.error(`Erreur envoi email alerte critique : ${err.message}`);
-          });
+            machineNom, typeCapteur: type, valeur, unite,
+            seuilFranchi: seuilDepasse, typeDepassement, message, timestamp: new Date(),
+          }).catch(err => this.logger.error(`Erreur email nouvelle alerte : ${err.message}`));
         }
       }
     }
