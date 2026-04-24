@@ -210,6 +210,12 @@ export class MachinesService {
       throw new BadRequestException('La machine est deja en marche');
     }
 
+    // Résoudre toutes les alertes non résolues pour remettre le système à zéro
+    await this.alerteModel.updateMany(
+      { machine_id: new Types.ObjectId(id), resolue: false },
+      { resolue: true, resolue_le: new Date() },
+    ).exec();
+
     machine.etat = 'en_marche';
     machine.statut = 'en_ligne';
     await machine.save();

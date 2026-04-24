@@ -1,6 +1,5 @@
 export interface Utilisateur {
   _id: string;
-  id: string;
   email: string;
   nom: string;
   role: 'admin' | 'responsable_maintenance' | 'operateur';

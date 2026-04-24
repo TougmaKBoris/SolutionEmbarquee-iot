@@ -218,10 +218,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         alerteExistante.seuil_depasse = seuilDepasse;
         alerteExistante.niveau = niveau;
         alerteExistante.message = message;
-        await alerteExistante.save();
 
-        // Email si escalade attention → critique
-        if (niveau === 'critique' && ancienNiveau !== 'critique') {
+        // Email si escalade attention → critique et pas encore envoyé
+        if (niveau === 'critique' && ancienNiveau !== 'critique' && !alerteExistante.email_envoye) {
+          alerteExistante.email_envoye = true;
+          await alerteExistante.save();
           this.emailsService.envoyerAlerteCritique({
             machineNom,
             typeCapteur: type,
@@ -234,8 +235,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
           }).catch(err => {
             this.logger.error(`Erreur envoi email alerte critique (escalade) : ${err.message}`);
           });
+        } else {
+          await alerteExistante.save();
         }
       } else {
+        const doitEnvoyerEmail = niveau === 'critique';
         const alerte = await this.alerteModel.create({
           machine_id: new Types.ObjectId(machineId),
           type_capteur: type,
@@ -244,13 +248,13 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
           niveau,
           message,
           resolue: false,
+          email_envoye: doitEnvoyerEmail,
         });
 
-        // Emettre la nouvelle alerte via Socket.IO
         this.tempsReelGateway.emitToMachine(machineId, 'alerte:nouvelle', alerte);
         this.tempsReelGateway.emitToAll('alerte:nouvelle', alerte);
 
-        if (niveau === 'critique') {
+        if (doitEnvoyerEmail) {
           this.emailsService.envoyerAlerteCritique({
             machineNom,
             typeCapteur: type,
