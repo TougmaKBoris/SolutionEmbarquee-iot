@@ -24,7 +24,7 @@ export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprim
 
   if (alertes.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: 30, color: '#64748B' }}>
+      <div style={{ textAlign: 'center', padding: 30, color: '#475569' }}>
         <CheckCircle size={32} color="#16A34A" style={{ marginBottom: 8 }} />
         <p style={{ fontSize: 14 }}>Aucune alerte active</p>
       </div>
@@ -43,12 +43,12 @@ export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprim
               </div>
               <div>
                 <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Supprimer cette alerte ?</div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>Cette action est irréversible.</div>
+                <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>Cette action est irréversible.</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmer(null)}
-                style={{ padding: '9px 20px', borderRadius: 8, background: '#F1F5F9', color: '#64748B', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+                style={{ padding: '9px 20px', borderRadius: 8, background: '#F1F5F9', color: '#475569', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}>
                 Annuler
               </button>
               <button onClick={() => { if (onSupprimer) onSupprimer(confirmer); setConfirmer(null); }}
@@ -71,7 +71,7 @@ export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprim
                     {critique ? <AlertCircle size={14} color="#DC2626" /> : <AlertTriangle size={14} color="#D97706" />}
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{a.message}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500, marginLeft: 20 }}>{a.machine_id?.nom || 'Machine'} — {tempsEcoule(a.createdAt)}</div>
+                  <div style={{ fontSize: 11, color: '#475569', fontWeight: 500, marginLeft: 20 }}>{a.machine_id?.nom || 'Machine'} — {tempsEcoule(a.createdAt)}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 8, background: critique ? '#DC2626' : '#D97706', color: '#fff', fontWeight: 600 }}>{a.niveau}</span>
