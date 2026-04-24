@@ -17,7 +17,7 @@ export class Alerte {
   @Prop({ required: true })
   seuil_depasse: number;
 
-  @Prop({ required: true, enum: ['attention', 'critique'] })
+  @Prop({ required: true, enum: ['attention', 'critique', 'ignoree'] })
   niveau: string;
 
   @Prop({ required: true })
@@ -28,6 +28,9 @@ export class Alerte {
 
   @Prop({ default: null })
   resolue_le: Date;
+
+  @Prop({ default: false })
+  email_envoye: boolean;
 }
 
 export const AlerteSchema = SchemaFactory.createForClass(Alerte);
