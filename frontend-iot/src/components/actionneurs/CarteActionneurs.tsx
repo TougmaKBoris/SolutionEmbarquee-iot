@@ -48,9 +48,9 @@ export default function CarteActionneurs({ machineId, mode = 'auto', etatMachine
       : null;
 
   return (
-    <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+    <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, color: '#0F172A' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
           <Power size={18} /> Actionneurs
         </div>
         {desactive && (
@@ -68,23 +68,23 @@ export default function CarteActionneurs({ machineId, mode = 'auto', etatMachine
           <div key={a._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < actionneurs.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: COULEURS[a.type] || '#999' }} />
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#0F172A' }}>{LABELS[a.type] || a.type}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{LABELS[a.type] || a.type}</span>
             </div>
             <button
               onClick={() => toggle(a.type, a.etat)}
               disabled={desactive}
               style={{
-                width: 40,
-                height: 22,
-                borderRadius: 11,
-                background: a.etat ? '#4F46E5' : '#E2E8F0',
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                background: a.etat ? '#2563EB' : '#E2E8F0',
                 position: 'relative',
                 border: 'none',
                 cursor: desactive ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
               }}
             >
-              <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: a.etat ? 20 : 2, transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.15)' }} />
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: a.etat ? 22 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }} />
             </button>
           </div>
         ))}

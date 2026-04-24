@@ -8,7 +8,7 @@ export class CapteurData {
   @Prop({ type: Types.ObjectId, ref: 'Machine', required: true })
   machine_id: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['temperature', 'courant', 'vibration', 'pression'] })
+  @Prop({ required: true })
   type: string;
 
   @Prop({ required: true })

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Machine, MachineDocument } from './entities/machine.entity';
 import { CreateMachineDto } from './dto/create-machine.dto';
+
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { Actionneur, ActionneurDocument } from '../actionneurs/entities/actionneur.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
@@ -11,14 +12,18 @@ import { Affectation, AffectationDocument } from '../affectations/entities/affec
 import { CapteurData, CapteurDataDocument } from '../capteurs/entities/capteur-data.entity';
 import { Evenement, EvenementDocument } from '../evenements/entities/evenement.entity';
 import { EvenementsService } from '../evenements/evenements.service';
+import { MachineSupprimee, MachineSupprimeeDocument } from '../common/initialisation/machine-supprimee.schema';
+import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
 
 @Injectable()
 export class MachinesService {
-  private readonly seuilsDefaut = {
-    temperature: { valeur_min: 70, valeur_max: 88 },
-    courant: { valeur_min: 4.5, valeur_max: 5.5 },
-    vibration: { valeur_min: 0.8, valeur_max: 1.1 },
-    pression: { valeur_min: 4.0, valeur_max: 5.0 },
+  private readonly SEED_MACHINES = ['Machine A', 'Machine B', 'Machine C'];
+
+  private readonly seuilsDefaut: Record<string, { valeur_min: number; valeur_max: number; unite: string }> = {
+    temperature: { valeur_min: 70, valeur_max: 88, unite: '°C' },
+    courant: { valeur_min: 4.5, valeur_max: 5.5, unite: 'A' },
+    vibration: { valeur_min: 0.8, valeur_max: 1.1, unite: 'g' },
+    pression: { valeur_min: 4.0, valeur_max: 5.0, unite: 'bar' },
   };
 
   constructor(
@@ -29,7 +34,9 @@ export class MachinesService {
     @InjectModel(Affectation.name) private affectationModel: Model<AffectationDocument>,
     @InjectModel(CapteurData.name) private capteurDataModel: Model<CapteurDataDocument>,
     @InjectModel(Evenement.name) private evenementModel: Model<EvenementDocument>,
+    @InjectModel(MachineSupprimee.name) private machineSupprimeeModel: Model<MachineSupprimeeDocument>,
     private readonly evenementsService: EvenementsService,
+    private readonly tempsReelGateway: TempsReelGateway,
   ) {}
 
   async findAll() { return this.machineModel.find().exec(); }
@@ -41,16 +48,38 @@ export class MachinesService {
   }
 
   async create(dto: CreateMachineDto) {
-    const machine = await this.machineModel.create(dto);
+    const { capteursConfig, ...machineData } = dto;
+
+    // Generation automatique du code si absent
+    if (!machineData.code) {
+      machineData.code = await this.genererCodeUnique();
+    } else {
+      // Verifier l'unicite si fourni
+      const existe = await this.machineModel.findOne({ code: machineData.code }).exec();
+      if (existe) throw new BadRequestException(`Le code machine ${machineData.code} est deja utilise`);
+    }
+
+    const machine = await this.machineModel.create(machineData);
 
     for (const type of machine.actionneurs) {
       await this.actionneurModel.create({ machine_id: machine._id, type, etat: false });
     }
 
+    const configCustomMap = new Map((capteursConfig || []).map(c => [c.type, c]));
+
     for (const type of machine.capteurs) {
-      const seuil = this.seuilsDefaut[type];
-      if (seuil) {
-        await this.seuilModel.create({ machine_id: machine._id, type_capteur: type, ...seuil });
+      if (this.seuilsDefaut[type]) {
+        await this.seuilModel.create({ machine_id: machine._id, type_capteur: type, ...this.seuilsDefaut[type] });
+      } else if (configCustomMap.has(type)) {
+        const c = configCustomMap.get(type);
+        await this.seuilModel.create({
+          machine_id: machine._id,
+          type_capteur: type,
+          valeur_min: c.valeur_min,
+          valeur_max: c.valeur_max,
+          unite: c.unite,
+          type_donnee: c.type_donnee || 'numerique',
+        });
       }
     }
 
@@ -66,6 +95,15 @@ export class MachinesService {
   async remove(id: string) {
     const result = await this.machineModel.findByIdAndDelete(id).exec();
     if (!result) throw new NotFoundException('Machine non trouvee');
+
+    if (this.SEED_MACHINES.includes(result.nom)) {
+      await this.machineSupprimeeModel.updateOne(
+        { nom: result.nom },
+        { nom: result.nom },
+        { upsert: true },
+      ).exec();
+    }
+
     const mid = new Types.ObjectId(id);
     await Promise.all([
       this.actionneurModel.deleteMany({ machine_id: mid }).exec(),
@@ -101,6 +139,18 @@ export class MachinesService {
       metadata: { ancien_mode: ancienMode, nouveau_mode: nouveauMode },
     });
 
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
+      machine_id: id,
+      mode: nouveauMode,
+      etat: machine.etat,
+    });
+    this.tempsReelGateway.emitToAll('machine:etatChange', {
+      machine_id: id,
+      mode: nouveauMode,
+      etat: machine.etat,
+    });
+
     return machine;
   }
 
@@ -109,7 +159,6 @@ export class MachinesService {
     if (!machine) throw new NotFoundException('Machine non trouvee');
 
     machine.etat = 'arretee';
-    machine.statut = 'hors_ligne';
     await machine.save();
 
     await this.actionneurModel.updateMany(
@@ -138,6 +187,18 @@ export class MachinesService {
       metadata: { actionneurs_forces_off: true },
     });
 
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
+      machine_id: id,
+      mode: machine.mode,
+      etat: 'arretee',
+    });
+    this.tempsReelGateway.emitToAll('machine:etatChange', {
+      machine_id: id,
+      mode: machine.mode,
+      etat: 'arretee',
+    });
+
     return { message: `Arret d'urgence applique sur ${machine.nom}`, machine };
   }
 
@@ -145,7 +206,7 @@ export class MachinesService {
     const machine = await this.machineModel.findById(id).exec();
     if (!machine) throw new NotFoundException('Machine non trouvee');
 
-    if (machine.etat === 'en_marche') {
+    if (machine.etat === 'en_marche' && machine.statut === 'en_ligne') {
       throw new BadRequestException('La machine est deja en marche');
     }
 
@@ -163,6 +224,32 @@ export class MachinesService {
       description: `Machine ${machine.nom} redemarree`,
     });
 
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
+      machine_id: id,
+      mode: machine.mode,
+      etat: 'en_marche',
+      statut: 'en_ligne',
+    });
+    this.tempsReelGateway.emitToAll('machine:etatChange', {
+      machine_id: id,
+      mode: machine.mode,
+      etat: 'en_marche',
+      statut: 'en_ligne',
+    });
+
     return { message: `Machine ${machine.nom} redemarree`, machine };
+  }
+
+  private async genererCodeUnique(): Promise<string> {
+    let code = '';
+    let existe = true;
+    while (existe) {
+      const num = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
+      code = `M-${num}`;
+      const machine = await this.machineModel.findOne({ code }).exec();
+      if (!machine) existe = false;
+    }
+    return code;
   }
 }

@@ -8,6 +8,9 @@ export class Machine {
   @Prop({ required: true })
   nom: string;
 
+  @Prop({ unique: true, required: true, index: true })
+  code: string;
+
   @Prop({ type: [String], default: [] })
   capteurs: string[];
 
@@ -22,6 +25,9 @@ export class Machine {
 
   @Prop({ default: 'en_marche', enum: ['en_marche', 'arretee'] })
   etat: string;
+
+  @Prop({ default: 'simulation', enum: ['simulation', 'mqtt'] })
+  source: string;
 }
 
 export const MachineSchema = SchemaFactory.createForClass(Machine);

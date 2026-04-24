@@ -8,16 +8,20 @@ export interface Utilisateur {
 export interface Machine {
   _id: string;
   nom: string;
+  code?: string;
   capteurs: string[];
   actionneurs: string[];
   statut: 'en_ligne' | 'hors_ligne';
+  source?: 'simulation' | 'mqtt';
+  mode?: string;
+  etat?: string;
   createdAt: string;
 }
 
 export interface CapteurData {
   _id: string;
   machine_id: string;
-  type: 'temperature' | 'courant' | 'vibration' | 'pression';
+  type: string;
   valeur: number;
   unite: string;
   timestamp: string;
@@ -28,12 +32,13 @@ export interface CapteurLive {
   valeur: number;
   unite: string;
   timestamp: string;
+  type_donnee?: string;
 }
 
 export interface Actionneur {
   _id: string;
   machine_id: string;
-  type: 'led_rouge' | 'led_verte' | 'buzzer' | 'servomoteur';
+  type: string;
   etat: boolean;
   derniere_commande: string | null;
 }
@@ -44,7 +49,7 @@ export interface Alerte {
   type_capteur: string;
   valeur: number;
   seuil_depasse: number;
-  niveau: 'attention' | 'critique';
+  niveau: 'attention' | 'critique' | 'ignoree';
   message: string;
   resolue: boolean;
   resolue_le: string | null;

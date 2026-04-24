@@ -7,6 +7,7 @@ import { Machine, MachineDocument } from '../../machines/entities/machine.entity
 import { Seuil, SeuilDocument } from '../../seuils/entities/seuil.entity';
 import { Actionneur, ActionneurDocument } from '../../actionneurs/entities/actionneur.entity';
 import { Affectation, AffectationDocument } from '../../affectations/entities/affectation.entity';
+import { MachineSupprimee, MachineSupprimeeDocument } from './machine-supprimee.schema';
 
 @Injectable()
 export class InitialisationService implements OnModuleInit {
@@ -18,6 +19,7 @@ export class InitialisationService implements OnModuleInit {
     @InjectModel(Seuil.name) private seuilModel: Model<SeuilDocument>,
     @InjectModel(Actionneur.name) private actionneurModel: Model<ActionneurDocument>,
     @InjectModel(Affectation.name) private affectationModel: Model<AffectationDocument>,
+    @InjectModel(MachineSupprimee.name) private machineSupprimeeModel: Model<MachineSupprimeeDocument>,
   ) {}
 
   async onModuleInit() {
@@ -46,19 +48,22 @@ export class InitialisationService implements OnModuleInit {
 
   private async seedMachines() {
     const machines = [
-      { nom: 'Machine A', capteurs: ['temperature', 'courant', 'vibration', 'pression'], actionneurs: ['led_rouge', 'led_verte', 'buzzer', 'servomoteur'], statut: 'en_ligne' },
-      { nom: 'Machine B', capteurs: ['temperature', 'courant', 'vibration'], actionneurs: ['led_rouge', 'led_verte'], statut: 'en_ligne' },
-      { nom: 'Machine C', capteurs: ['temperature', 'courant', 'vibration', 'pression'], actionneurs: ['led_rouge', 'buzzer', 'servomoteur'], statut: 'hors_ligne' },
+      { nom: 'Machine A', code: 'MA', capteurs: ['temperature', 'courant', 'vibration', 'pression'], actionneurs: ['led_rouge', 'led_verte', 'buzzer', 'servomoteur'], statut: 'en_ligne' },
+      { nom: 'Machine B', code: 'MB', capteurs: ['temperature', 'courant', 'vibration'], actionneurs: ['led_rouge', 'led_verte'], statut: 'en_ligne' },
+      { nom: 'Machine C', code: 'MC', capteurs: ['temperature', 'courant', 'vibration', 'pression'], actionneurs: ['led_rouge', 'buzzer', 'servomoteur'], statut: 'hors_ligne' },
     ];
 
     const seuilsDefaut = {
-      temperature: { valeur_min: 70, valeur_max: 88 },
-      courant: { valeur_min: 4.5, valeur_max: 5.5 },
-      vibration: { valeur_min: 0.8, valeur_max: 1.1 },
-      pression: { valeur_min: 4.0, valeur_max: 5.0 },
+      temperature: { valeur_min: 70, valeur_max: 88, unite: '°C' },
+      courant: { valeur_min: 4.5, valeur_max: 5.5, unite: 'A' },
+      vibration: { valeur_min: 0.8, valeur_max: 1.1, unite: 'g' },
+      pression: { valeur_min: 4.0, valeur_max: 5.0, unite: 'bar' },
     };
 
     for (const machineData of machines) {
+      const supprimee = await this.machineSupprimeeModel.findOne({ nom: machineData.nom }).exec();
+      if (supprimee) continue;
+
       let machine = await this.machineModel.findOne({ nom: machineData.nom }).exec();
       if (!machine) {
         machine = await this.machineModel.create(machineData);

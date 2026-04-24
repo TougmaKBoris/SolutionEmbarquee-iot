@@ -5,6 +5,8 @@ import { Actionneur, ActionneurDocument } from './entities/actionneur.entity';
 import { CommandeActionneurDto } from './dto/commande-actionneur.dto';
 import { Machine, MachineDocument } from '../machines/entities/machine.entity';
 import { EvenementsService } from '../evenements/evenements.service';
+import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
+import { MqttService } from '../mqtt/mqtt.service';
 
 @Injectable()
 export class ActionneursService {
@@ -12,6 +14,8 @@ export class ActionneursService {
     @InjectModel(Actionneur.name) private actionneurModel: Model<ActionneurDocument>,
     @InjectModel(Machine.name) private machineModel: Model<MachineDocument>,
     private readonly evenementsService: EvenementsService,
+    private readonly tempsReelGateway: TempsReelGateway,
+    private readonly mqttService: MqttService,
   ) {}
 
   async getByMachine(machineId: string) {
@@ -46,6 +50,18 @@ export class ActionneursService {
       description: `Actionneur ${dto.type} mis a ${dto.etat ? 'ON' : 'OFF'} sur ${machine.nom}`,
       metadata: { type_actionneur: dto.type, nouvel_etat: dto.etat },
     });
+
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(machineId, 'actionneur:update', {
+      machine_id: machineId,
+      type: dto.type,
+      etat: dto.etat,
+    });
+
+    // Si machine MQTT, publier la commande vers le vrai actionneur
+    if (machine.source === 'mqtt') {
+      this.mqttService.publishCommande(machineId, dto.type, dto.etat);
+    }
 
     return actionneur;
   }

@@ -13,10 +13,13 @@ import Historique from './pages/Historique';
 import Seuils from './pages/Seuils';
 import AnalyseIA from './pages/AnalyseIA';
 
+import { Toaster } from 'react-hot-toast';
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <FournisseurAuth>
+        <Toaster position="top-right" reverseOrder={false} />
         <Routes>
           <Route path="/connexion" element={<Login />} />
           <Route element={<GardienRoute><Disposition /></GardienRoute>}>

@@ -22,8 +22,13 @@ export function FournisseurAuth({ children }: { children: ReactNode }) {
     const jetonSauvegarde = localStorage.getItem('jeton');
     const userSauvegarde = localStorage.getItem('utilisateur');
     if (jetonSauvegarde && userSauvegarde) {
-      setJeton(jetonSauvegarde);
-      setUtilisateur(JSON.parse(userSauvegarde));
+      try {
+        setJeton(jetonSauvegarde);
+        setUtilisateur(JSON.parse(userSauvegarde));
+      } catch {
+        localStorage.removeItem('jeton');
+        localStorage.removeItem('utilisateur');
+      }
     }
     setChargement(false);
   }, []);

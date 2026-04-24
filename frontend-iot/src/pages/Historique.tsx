@@ -7,6 +7,13 @@ import { Download, Activity, AlertOctagon, RotateCw, Settings, CheckCircle, Powe
 const COULEURS: Record<string, string> = { temperature: '#E24B4A', courant: '#378ADD', vibration: '#EF9F27', pression: '#639922' };
 const LABELS: Record<string, string> = { temperature: 'Température', courant: 'Courant', vibration: 'Vibration', pression: 'Pression' };
 const UNITES: Record<string, string> = { temperature: '°C', courant: 'A', vibration: 'g', pression: 'bar' };
+const COULEURS_CUSTOM = ['#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#84CC16'];
+let _couleurIdx = 0;
+const getCouleurCustom = (type: string) => {
+  if (!_couleurCache[type]) _couleurCache[type] = COULEURS_CUSTOM[_couleurIdx++ % COULEURS_CUSTOM.length];
+  return _couleurCache[type];
+};
+const _couleurCache: Record<string, string> = {};
 
 export default function PageHistorique() {
   const { machines } = utiliserMachines();
@@ -23,7 +30,7 @@ export default function PageHistorique() {
 
   useEffect(() => {
     if (!machineId) return;
-    api.get(`/seuils?machine_id=${machineId}`)
+    api.get(`/seuils/${machineId}`)
       .then(res => {
         const map: Record<string, [number, number]> = {};
         for (const s of res.data) {
@@ -74,11 +81,17 @@ export default function PageHistorique() {
         const seuil = seuilsParType[type];
         let statut = 'normal';
         if (seuil) {
-          if (d.valeur >= seuil[1]) statut = 'critique';
-          else if (d.valeur >= seuil[0]) statut = 'attention';
+          const horsMax = d.valeur > seuil[1];
+          const horsMin = d.valeur < seuil[0];
+          if (horsMax || horsMin) {
+            const ecart = horsMax
+              ? ((d.valeur - seuil[1]) / seuil[1]) * 100
+              : ((seuil[0] - d.valeur) / seuil[0]) * 100;
+            statut = ecart > 15 ? 'critique' : 'attention';
+          }
         }
         const heure = new Date(d.timestamp).toLocaleString('fr-FR');
-        lignes.push(`${heure};${LABELS[type]};${d.valeur};${UNITES[type]};${statut}`);
+        lignes.push(`${heure};${LABELS[type] || type};${d.valeur};${d.unite || UNITES[type] || ''};${statut}`);
       }
     }
     const csv = lignes.join('\n');
@@ -152,7 +165,7 @@ export default function PageHistorique() {
         {capteursMachine.map(type => {
           const donnees = (donneesParType[type] || []).slice(0, 18);
           const s = stats(donneesParType[type] || []);
-          const couleur = COULEURS[type] || '#64748B';
+          const couleur = COULEURS[type] || getCouleurCustom(type);
           const seuil = seuilsParType[type];
           const valeurMax = donnees.length > 0 ? Math.max(...donnees.map(d => d.valeur), seuil ? seuil[1] * 1.1 : 100) : 100;
 
@@ -163,7 +176,7 @@ export default function PageHistorique() {
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: couleur }} />
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{LABELS[type] || type}</span>
                 </div>
-                {seuil && <span style={{ fontSize: 10, color: '#94A3B8' }}>seuil {seuil[0]} - {seuil[1]} {UNITES[type]}</span>}
+                {seuil && <span style={{ fontSize: 10, color: '#94A3B8' }}>seuil {seuil[0]} - {seuil[1]} {donnees[0]?.unite || UNITES[type] || ''}</span>}
               </div>
 
               {/* Graphique en barres - couleurs adoucies */}
@@ -173,15 +186,22 @@ export default function PageHistorique() {
                 )}
                 {donnees.slice().reverse().map((d, i) => {
                   const hauteurPct = Math.min(100, (d.valeur / valeurMax) * 100);
-                  const estCritique = seuil && d.valeur >= seuil[1];
-                  const estAttention = seuil && d.valeur >= seuil[0] && d.valeur < seuil[1];
+                  const horsPlage = seuil && (d.valeur > seuil[1] || d.valeur < seuil[0]);
+                  let ecart = 0;
+                  if (horsPlage && seuil) {
+                    ecart = d.valeur > seuil[1]
+                      ? ((d.valeur - seuil[1]) / seuil[1]) * 100
+                      : ((seuil[0] - d.valeur) / seuil[0]) * 100;
+                  }
+                  const estCritique = horsPlage && ecart > 15;
+                  const estAttention = horsPlage && !estCritique;
                   let opacity = 0.5;
                   if (estAttention) opacity = 0.8;
                   if (estCritique) opacity = 1.0;
                   return (
                     <div key={i}
                       style={{ flex: 1, height: `${hauteurPct}%`, background: couleur, opacity, borderRadius: '3px 3px 0 0', minHeight: 4, transition: 'all 0.2s' }}
-                      title={`${d.valeur} ${UNITES[type]}`}
+                      title={`${d.valeur} ${d.unite || UNITES[type] || ''}`}
                     />
                   );
                 })}

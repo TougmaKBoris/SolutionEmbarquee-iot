@@ -25,8 +25,12 @@ export default function PageAlertes() {
     }
   }, [role]);
 
-  const machineIdFiltre = role === 'operateur' ? machineOperateur : filtreMachine;
-  const { alertes, resoudre, ignorer, supprimer, rafraichir } = utiliserAlertes(machineIdFiltre || undefined);
+  // Pour l'opérateur : null = pas encore chargé (on attend), ID = filtré, '' = pas de machine (pas d'alertes)
+  // Pour admin/responsable : undefined = toutes les alertes, ID = filtré par machine
+  const machineIdFiltre = role === 'operateur'
+    ? (machineOperateur || null)
+    : (filtreMachine || undefined);
+  const { alertes, resoudre, ignorer, supprimer, rafraichir } = utiliserAlertes(machineIdFiltre);
 
   const peutResoudre = role === 'admin' || role === 'responsable_maintenance';
 

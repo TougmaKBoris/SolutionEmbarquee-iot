@@ -8,7 +8,7 @@ export class Actionneur {
   @Prop({ type: Types.ObjectId, ref: 'Machine', required: true })
   machine_id: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['led_rouge', 'led_verte', 'buzzer', 'servomoteur'] })
+  @Prop({ required: true })
   type: string;
 
   @Prop({ default: false })

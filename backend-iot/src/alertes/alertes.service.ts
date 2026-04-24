@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Alerte, AlerteDocument } from './entities/alerte.entity';
 import { EvenementsService } from '../evenements/evenements.service';
+import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
 
 @Injectable()
 export class AlertesService {
@@ -12,6 +13,7 @@ export class AlertesService {
   constructor(
     @InjectModel(Alerte.name) private alerteModel: Model<AlerteDocument>,
     private readonly evenementsService: EvenementsService,
+    private readonly tempsReelGateway: TempsReelGateway,
   ) {
     setTimeout(() => this.supprimerAnciennesAlertes(), 5000);
   }
@@ -51,6 +53,10 @@ export class AlertesService {
       },
     });
 
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(machineId, 'alerte:resolue', alerte);
+    this.tempsReelGateway.emitToAll('alerte:resolue', alerte);
+
     return alerte;
   }
 
@@ -75,6 +81,10 @@ export class AlertesService {
       metadata: { type_capteur: alerte.type_capteur },
     });
 
+    // Emettre via Socket.IO
+    this.tempsReelGateway.emitToMachine(machineId, 'alerte:resolue', alerte);
+    this.tempsReelGateway.emitToAll('alerte:resolue', alerte);
+
     return alerte;
   }
 
@@ -93,9 +103,9 @@ export class AlertesService {
   @Cron(CronExpression.EVERY_MINUTE)
   async supprimerAnciennesAlertes() {
     const limite = new Date(Date.now() - 60 * 60 * 1000);
-    const result = await this.alerteModel.deleteMany({ resolue: false, createdAt: { $lt: limite } }).exec();
+    const result = await this.alerteModel.deleteMany({ resolue: true, resolue_le: { $lt: limite } }).exec();
     if (result.deletedCount > 0) {
-      this.logger.log(`${result.deletedCount} alertes non resolues de plus d'1h supprimees`);
+      this.logger.log(`${result.deletedCount} alertes resolues de plus d'1h supprimees`);
     }
   }
 }
