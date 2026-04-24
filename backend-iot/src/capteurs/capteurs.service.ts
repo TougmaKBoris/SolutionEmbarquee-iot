@@ -7,11 +7,23 @@ import { Machine, MachineDocument } from '../machines/entities/machine.entity';
 import { Alerte, AlerteDocument } from '../alertes/entities/alerte.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
 import { EmailsService } from '../emails/emails.service';
+import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
 
 @Injectable()
 export class CapteursService {
   private readonly logger = new Logger(CapteursService.name);
   private liveData: Map<string, any[]> = new Map();
+  private compteursEtat: Map<string, number> = new Map();
+  private emailCooldowns: Map<string, number> = new Map();
+  private readonly EMAIL_COOLDOWN_MS = 30 * 60 * 1000;
+
+  private peutEnvoyerEmail(machineId: string, typeCapteur: string): boolean {
+    const cle = `${machineId}:${typeCapteur}`;
+    const dernier = this.emailCooldowns.get(cle) ?? 0;
+    if (Date.now() - dernier < this.EMAIL_COOLDOWN_MS) return false;
+    this.emailCooldowns.set(cle, Date.now());
+    return true;
+  }
 
   constructor(
     @InjectModel(CapteurData.name) private capteurDataModel: Model<CapteurDataDocument>,
@@ -19,30 +31,59 @@ export class CapteursService {
     @InjectModel(Alerte.name) private alerteModel: Model<AlerteDocument>,
     @InjectModel(Seuil.name) private seuilModel: Model<SeuilDocument>,
     private readonly emailsService: EmailsService,
+    private readonly tempsReelGateway: TempsReelGateway,
   ) {}
 
-  private genererValeur(type: string): { valeur: number; unite: string } {
+  private genererValeur(type: string, seuil?: any): { valeur: number; unite: string } {
     switch (type) {
       case 'temperature': return { valeur: +(55 + Math.random() * 35).toFixed(1), unite: '°C' };
       case 'courant': return { valeur: +(2 + Math.random() * 4).toFixed(2), unite: 'A' };
       case 'vibration': return { valeur: +(0.1 + Math.random() * 1.2).toFixed(2), unite: 'g' };
       case 'pression': return { valeur: +(1 + Math.random() * 5.5).toFixed(1), unite: 'bar' };
-      default: return { valeur: 0, unite: '' };
+      default: {
+        if (seuil) {
+          const typeDonnee = (seuil as any).type_donnee || 'numerique';
+          if (typeDonnee === 'binaire') {
+            return { valeur: Math.random() > 0.2 ? 1 : 0, unite: seuil.unite || '' };
+          }
+          if (typeDonnee === 'compteur') {
+            const derniere = this.compteursEtat.get(type) ?? seuil.valeur_min;
+            const increment = Math.floor(Math.random() * 5);
+            const nvValeur = Math.min(derniere + increment, seuil.valeur_max);
+            this.compteursEtat.set(type, nvValeur);
+            return { valeur: nvValeur, unite: seuil.unite || '' };
+          }
+          const range = seuil.valeur_max - seuil.valeur_min;
+          const valeur = +(seuil.valeur_min - range * 0.1 + Math.random() * (range * 1.2)).toFixed(2);
+          return { valeur, unite: seuil.unite || '' };
+        }
+        return { valeur: 0, unite: '' };
+      }
     }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async simulerDonnees() {
-    const machines = await this.machineModel.find({ statut: 'en_ligne' }).exec();
+    const machines = await this.machineModel.find({ statut: 'en_ligne', etat: 'en_marche', source: { $ne: 'mqtt' } }).exec();
     for (const machine of machines) {
+      const seuils = await this.seuilModel.find({ machine_id: machine._id }).exec();
+      const seuilsMap = new Map(seuils.map(s => [s.type_capteur, s]));
+
       const readings = [];
       for (const type of machine.capteurs) {
-        const { valeur, unite } = this.genererValeur(type);
+        const { valeur, unite } = this.genererValeur(type, seuilsMap.get(type));
         const data = await this.capteurDataModel.create({ machine_id: machine._id, type, valeur, unite, timestamp: new Date() });
-        readings.push({ type, valeur, unite, timestamp: data.timestamp });
-        await this.verifierSeuils(machine._id.toString(), machine.nom, type, valeur);
+        const type_donnee = (seuilsMap.get(type) as any)?.type_donnee || 'numerique';
+        readings.push({ type, valeur, unite, timestamp: data.timestamp, type_donnee });
+        await this.verifierSeuils(machine._id.toString(), machine.nom, type, valeur, unite);
       }
       this.liveData.set(machine._id.toString(), readings);
+
+      // Emettre les donnees en temps reel via Socket.IO
+      this.tempsReelGateway.emitToMachine(machine._id.toString(), 'capteurs:update', {
+        machine_id: machine._id.toString(),
+        capteurs: readings,
+      });
     }
     this.logger.debug(`Donnees simulees pour ${machines.length} machine(s)`);
   }
@@ -60,12 +101,10 @@ export class CapteursService {
    * Email envoye UNIQUEMENT quand une NOUVELLE alerte critique est creee
    * (pas lors de la mise a jour d'une alerte existante).
    */
-  private async verifierSeuils(machineId: string, machineNom: string, type: string, valeur: number) {
+  private async verifierSeuils(machineId: string, machineNom: string, type: string, valeur: number, unite: string) {
+    if (!Types.ObjectId.isValid(machineId)) return;
     const seuil = await this.seuilModel.findOne({ machine_id: new Types.ObjectId(machineId), type_capteur: type }).exec();
     if (!seuil) return;
-
-    const unites: Record<string, string> = { temperature: '°C', courant: 'A', vibration: 'g', pression: 'bar' };
-    const unite = unites[type] || '';
 
     let niveau: string | null = null;
     let message: string = '';
@@ -108,15 +147,31 @@ export class CapteursService {
       }).exec();
 
       if (alerteExistante) {
-        // Mise a jour d'une alerte existante - PAS d'email
+        const ancienNiveau = alerteExistante.niveau;
         alerteExistante.valeur = valeur;
         alerteExistante.seuil_depasse = seuilDepasse;
         alerteExistante.niveau = niveau;
         alerteExistante.message = message;
         await alerteExistante.save();
+
+        // Email si escalade attention → critique (avec cooldown)
+        if (niveau === 'critique' && ancienNiveau !== 'critique' && this.peutEnvoyerEmail(machineId, type)) {
+          this.emailsService.envoyerAlerteCritique({
+            machineNom,
+            typeCapteur: type,
+            valeur,
+            unite,
+            seuilFranchi: seuilDepasse,
+            typeDepassement,
+            message,
+            timestamp: new Date(),
+          }).catch(err => {
+            this.logger.error(`Erreur envoi email alerte critique (escalade) : ${err.message}`);
+          });
+        }
       } else {
-        // NOUVELLE alerte - email envoye uniquement si niveau critique
-        await this.alerteModel.create({
+        // NOUVELLE alerte - email si niveau critique
+        const alerte = await this.alerteModel.create({
           machine_id: new Types.ObjectId(machineId),
           type_capteur: type,
           valeur,
@@ -126,7 +181,11 @@ export class CapteursService {
           resolue: false,
         });
 
-        if (niveau === 'critique') {
+        // Emettre la nouvelle alerte via Socket.IO
+        this.tempsReelGateway.emitToMachine(machineId, 'alerte:nouvelle', alerte);
+        this.tempsReelGateway.emitToAll('alerte:nouvelle', alerte);
+
+        if (niveau === 'critique' && this.peutEnvoyerEmail(machineId, type)) {
           this.emailsService.envoyerAlerteCritique({
             machineNom,
             typeCapteur: type,
@@ -150,8 +209,25 @@ export class CapteursService {
     return result;
   }
 
-  getLiveByMachine(machineId: string) {
-    return { machine_id: machineId, capteurs: this.liveData.get(machineId) || [] };
+  async getLiveByMachine(machineId: string) {
+    const live = this.liveData.get(machineId);
+    if (live && live.length > 0) return { machine_id: machineId, capteurs: live };
+
+    const machine = await this.machineModel.findById(machineId).exec();
+    if (!machine) return { machine_id: machineId, capteurs: [] };
+
+    const capteurs = [];
+    for (const type of machine.capteurs) {
+      const derniere = await this.capteurDataModel
+        .findOne({ machine_id: new Types.ObjectId(machineId), type })
+        .sort({ timestamp: -1 })
+        .exec();
+      if (derniere) {
+        const seuil = await this.seuilModel.findOne({ machine_id: new Types.ObjectId(machineId), type_capteur: type }).exec();
+        capteurs.push({ type: derniere.type, valeur: derniere.valeur, unite: derniere.unite, timestamp: derniere.timestamp, type_donnee: (seuil as any)?.type_donnee || 'numerique' });
+      }
+    }
+    return { machine_id: machineId, capteurs };
   }
 
   async getHistorique(machineId: string, limit = 100) {

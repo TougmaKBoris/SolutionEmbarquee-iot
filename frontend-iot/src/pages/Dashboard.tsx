@@ -173,39 +173,39 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A' }}>{role === 'operateur' ? 'Ma machine' : 'Tableau de bord'}</h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Surveillance en temps reel des equipements</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>{role === 'operateur' ? 'Ma machine' : 'Tableau de bord'}</h1>
+          <p style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Surveillance en temps reel des equipements</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {machineSelectionnee && etatMachine === 'en_marche' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, border: '1px solid #D1FAE5', background: '#ECFDF5' }}>
-              <Activity size={14} color="#10B981" />
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#059669' }}>Systeme actif</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #D1FAE5', background: '#ECFDF5' }}>
+              <Activity size={18} color="#10B981" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>Systeme actif</span>
             </div>
           )}
           {machineSelectionnee && etatMachine === 'arretee' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, border: '1px solid #FECACA', background: '#FEF2F2' }}>
-              <AlertOctagon size={14} color="#DC2626" />
-              <span style={{ fontSize: 12, fontWeight: 500, color: '#DC2626' }}>Machine arretee</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #FECACA', background: '#FEF2F2' }}>
+              <AlertOctagon size={18} color="#DC2626" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#DC2626' }}>Machine arretee</span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#64748B' }}>
-            <Clock size={14} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, color: '#64748B', fontWeight: 500, padding: '8px 16px', background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+            <Clock size={16} />
             <span>{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span style={{ fontSize: 12, color: '#94A3B8' }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span style={{ fontSize: 14, color: '#94A3B8', marginLeft: 4 }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         </div>
       </div>
 
       {/* Barre selecteur machines + mode + arret urgence (admin + responsable) */}
       {role !== 'operateur' && machines.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           {machines.map((m: any) => (
             <button key={m._id} onClick={() => setMachineId(m._id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: m._id === machineId ? 'none' : '1px solid #E2E8F0', background: m._id === machineId ? '#4F46E5' : '#fff', color: m._id === machineId ? '#fff' : '#64748B', cursor: 'pointer', transition: 'all 0.2s' }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.statut === 'en_ligne' ? '#22C55E' : '#EF4444' }} />
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: m._id === machineId ? 'none' : '1px solid #E2E8F0', background: m._id === machineId ? '#2563EB' : '#fff', color: m._id === machineId ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.2s', boxShadow: m._id === machineId ? '0 4px 12px rgba(37,99,235,0.2)' : '0 1px 2px rgba(0,0,0,0.05)' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: (m.statut === 'en_ligne' && m.etat === 'en_marche') ? '#10B981' : '#EF4444' }} />
               {m.nom}
             </button>
           ))}
@@ -262,82 +262,77 @@ export default function Dashboard() {
       {/* Operateur - machine arretee */}
       {role === 'operateur' && machineSelectionnee && etatMachine === 'arretee' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-          <div style={{ padding: '8px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, fontSize: 12, color: '#991B1B', fontWeight: 500 }}>
+          <div style={{ padding: '7px 14px', background: '#F8FAFC', borderLeft: '4px solid #DC2626', borderRadius: '0 8px 8px 0', fontSize: 12, color: '#475569', fontWeight: 500 }}>
             Machine arretee — contactez le responsable maintenance
           </div>
         </div>
       )}
 
-      {/* Bandeau machine arretee */}
-      {etatMachine === 'arretee' && machineSelectionnee && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, marginBottom: 16 }}>
-          <AlertOctagon size={18} color="#DC2626" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#991B1B' }}>Machine actuellement arretee</div>
-            <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 2 }}>
-              Tous les actionneurs sont desactives. {peutChangerMode ? 'Cliquez sur "Redemarrer" pour reprendre le fonctionnement.' : 'Contactez le responsable maintenance pour redemarrer.'}
+      {/* Carte operateurs compacte (admin + responsable) */}
+      {(role === 'admin' || role === 'responsable_maintenance') && machineSelectionnee && (
+        <div style={{ padding: '8px 14px', background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', marginBottom: 10, border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Users size={12} color="#94A3B8" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {operateursMachine.length === 0 ? 'Aucun operateur' : `${operateursMachine.length} op.`}
+              </span>
             </div>
+            {operateursMachine.map(a => {
+              const nom = a.operateur_id?.nom || 'Operateur';
+              return (
+                <div key={a._id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 8px 2px 3px', background: '#F8FAFC', borderRadius: 20, border: '1px solid #E2E8F0' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#0891B2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 600 }}>
+                    {nom.substring(0, 2).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 11, color: '#334155', fontWeight: 500 }}>{nom}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0' }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: modeActuel === 'auto' ? '#4F46E5' : '#F59E0B' }} />
+            <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
+              {modeActuel === 'auto' ? 'Auto' : 'Manuel'}
+            </span>
           </div>
         </div>
       )}
 
       {/* BANDEAU IA — discret, conditionnel (uniquement attention/critique) */}
       {(role === 'admin' || role === 'responsable_maintenance') && analyseIAFiltree && (
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
           <PanneauIA analyse={analyseIAFiltree} onVoirDetails={allerVersAnalyseIA} />
         </div>
       )}
 
-      {/* Carte operateurs compacte (admin + responsable) */}
-      {(role === 'admin' || role === 'responsable_maintenance') && machineSelectionnee && (
-        <div style={{ padding: '12px 16px', background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.04)', marginBottom: 16, border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Users size={14} color="#64748B" />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {operateursMachine.length === 0 ? 'Aucun operateur' : `${operateursMachine.length} operateur${operateursMachine.length > 1 ? 's' : ''}`}
-              </span>
-            </div>
-            {operateursMachine.map(a => {
-              const nom = a.operateur_id?.nom || 'Operateur';
-              return (
-                <div key={a._id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px 4px 4px', background: '#F8FAFC', borderRadius: 20, border: '1px solid #E2E8F0' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#0891B2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 600 }}>
-                    {nom.substring(0, 2).toUpperCase()}
-                  </div>
-                  <span style={{ fontSize: 12, color: '#0F172A', fontWeight: 500 }}>{nom}</span>
-                </div>
-              );
-            })}
+
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        {/* Colonne gauche : Capteurs + Alertes */}
+        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Cartes capteurs */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+            {capteurs.map((c, i) => <CarteCapteur key={i} capteur={c} />)}
+            {capteurs.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: '#64748B', fontSize: 13, background: '#fff', borderRadius: 12, border: '2px dashed #E2E8F0' }}>
+                En attente des donnees capteurs...
+              </div>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', background: modeActuel === 'auto' ? '#EEF2FF' : '#FEF3C7', borderRadius: 12 }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: modeActuel === 'auto' ? '#4F46E5' : '#F59E0B' }} />
-            <span style={{ fontSize: 10, color: modeActuel === 'auto' ? '#3C3489' : '#92400E', fontWeight: 600 }}>
-              Mode {modeActuel === 'auto' ? 'automatique' : 'manuel'}
-            </span>
+
+          {/* Alertes */}
+          <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#0F172A' }}>
+              <span>Alertes recentes</span>
+              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 10, minWidth: 20, textAlign: 'center' }}>{alertes.length}</span>
+            </div>
+            <CarteAlertes alertes={alertes} onResoudre={resoudre} onIgnorer={ignorer} onSupprimer={supprimer} limite={4} peutResoudre={peutResoudre} />
           </div>
         </div>
-      )}
 
-      {/* Cartes capteurs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
-        {capteurs.map((c, i) => <CarteCapteur key={i} capteur={c} />)}
-        {capteurs.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: '#64748B', fontSize: 14, background: '#fff', borderRadius: 12, border: '2px dashed #E2E8F0' }}>
-            En attente des donnees capteurs... Les donnees arrivent toutes les 10 secondes.
-          </div>
-        )}
-      </div>
-
-      {/* Actionneurs + Alertes */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        {machineId && <CarteActionneurs machineId={machineId} mode={modeActuel} etatMachine={etatMachine} />}
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
-            <span>Alertes recentes</span>
-            <span style={{ background: '#DC2626', color: '#fff', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 10, minWidth: 20, textAlign: 'center' }}>{alertes.length}</span>
-          </div>
-          <CarteAlertes alertes={alertes} onResoudre={resoudre} onIgnorer={ignorer} onSupprimer={supprimer} limite={4} peutResoudre={peutResoudre} />
+        {/* Colonne droite : Actionneurs */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 320 }}>
+          {machineId && <CarteActionneurs machineId={machineId} mode={modeActuel} etatMachine={etatMachine} />}
         </div>
       </div>
     </div>
