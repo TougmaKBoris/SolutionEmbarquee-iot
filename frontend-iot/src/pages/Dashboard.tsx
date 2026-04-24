@@ -88,7 +88,7 @@ export default function Dashboard() {
         ...prev,
         [machineId]: { ...prev[machineId], mode: nouveauMode },
       }));
-      setMessageInfo(`Machine basculee en mode ${nouveauMode === 'auto' ? 'automatique' : 'manuel'}`);
+      setMessageInfo(`Machine basculée en mode ${nouveauMode === 'auto' ? 'automatique' : 'manuel'}`);
       setTimeout(() => setMessageInfo(null), 3000);
     } catch (err: any) {
       setMessageInfo(err.response?.data?.message || 'Erreur lors du changement de mode');
@@ -105,10 +105,10 @@ export default function Dashboard() {
         [machineId]: { ...prev[machineId], etat: 'arretee' },
       }));
       setConfirmerArret(false);
-      setMessageInfo("Arret d'urgence applique. Une alerte critique a ete creee.");
+      setMessageInfo("Arrêt d'urgence appliqué. Une alerte critique a été créée.");
       setTimeout(() => setMessageInfo(null), 5000);
     } catch (err: any) {
-      setMessageInfo(err.response?.data?.message || "Erreur lors de l'arret d'urgence");
+      setMessageInfo(err.response?.data?.message || "Erreur lors de l'arrêt d'urgence");
       setConfirmerArret(false);
       setTimeout(() => setMessageInfo(null), 4000);
     }
@@ -122,10 +122,10 @@ export default function Dashboard() {
         ...prev,
         [machineId]: { ...prev[machineId], etat: 'en_marche' },
       }));
-      setMessageInfo('Machine redemarree avec succes');
+      setMessageInfo('Machine redémarrée avec succès');
       setTimeout(() => setMessageInfo(null), 3000);
     } catch (err: any) {
-      setMessageInfo(err.response?.data?.message || 'Erreur lors du redemarrage');
+      setMessageInfo(err.response?.data?.message || 'Erreur lors du redémarrage');
       setTimeout(() => setMessageInfo(null), 4000);
     }
   };
@@ -136,7 +136,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: 1200 }}>
-      {/* Popup confirmation arret urgence */}
+      {/* Popup confirmation arrêt urgence */}
       {confirmerArret && machineSelectionnee && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: '28px 32px', maxWidth: 460, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
@@ -145,20 +145,20 @@ export default function Dashboard() {
                 <AlertOctagon size={22} color="#DC2626" />
               </div>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Confirmer l'arret d'urgence ?</div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>
-                  Tous les actionneurs de <b style={{ color: '#DC2626' }}>{machineSelectionnee.nom}</b> seront immediatement desactives et une alerte critique sera enregistree.
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Confirmer l'arrêt d'urgence ?</div>
+                <div style={{ fontSize: 13, color: '#475569', marginTop: 2 }}>
+                  Tous les actionneurs de <b style={{ color: '#DC2626' }}>{machineSelectionnee.nom}</b> seront immédiatement désactivés et une alerte critique sera enregistrée.
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmerArret(false)}
-                style={{ padding: '9px 20px', borderRadius: 8, background: '#F1F5F9', color: '#64748B', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+                style={{ padding: '9px 20px', borderRadius: 8, background: '#F1F5F9', color: '#475569', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}>
                 Annuler
               </button>
               <button onClick={declencherArretUrgence}
                 style={{ padding: '9px 20px', borderRadius: 8, background: '#DC2626', color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-                Confirmer l'arret
+                Confirmer l'arrêt
               </button>
             </div>
           </div>
@@ -176,30 +176,30 @@ export default function Dashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>{role === 'operateur' ? 'Ma machine' : 'Tableau de bord'}</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Surveillance en temps reel des equipements</p>
+          <p style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>Surveillance en temps réel des équipements</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {machineSelectionnee && etatMachine === 'en_marche' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #D1FAE5', background: '#ECFDF5' }}>
               <Activity size={18} color="#10B981" />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>Systeme actif</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>Système actif</span>
             </div>
           )}
           {machineSelectionnee && etatMachine === 'arretee' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #FECACA', background: '#FEF2F2' }}>
               <AlertOctagon size={18} color="#DC2626" />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#DC2626' }}>Machine arretee</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#DC2626' }}>Machine arrêtée</span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, color: '#64748B', fontWeight: 500, padding: '8px 16px', background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, color: '#475569', fontWeight: 500, padding: '8px 16px', background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
             <Clock size={16} />
             <span>{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span style={{ fontSize: 14, color: '#94A3B8', marginLeft: 4 }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span style={{ fontSize: 14, color: '#475569', marginLeft: 4 }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         </div>
       </div>
 
-      {/* Barre selecteur machines + mode + arret urgence (admin + responsable) */}
+      {/* Barre sélecteur machines + mode + arrêt urgence (admin + responsable) */}
       {role !== 'operateur' && machines.length > 0 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           {machines.map((m: any) => (
@@ -217,69 +217,69 @@ export default function Dashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: 3, background: '#F1F5F9', borderRadius: 8, border: '1px solid #E2E8F0' }}>
               <button
                 onClick={() => changerMode('auto')}
-                style={{ padding: '5px 14px', background: modeActuel === 'auto' ? '#4F46E5' : 'transparent', color: modeActuel === 'auto' ? '#fff' : '#64748B', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                style={{ padding: '5px 14px', background: modeActuel === 'auto' ? '#4F46E5' : 'transparent', color: modeActuel === 'auto' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
                 Auto
               </button>
               <button
                 onClick={() => changerMode('manuel')}
-                style={{ padding: '5px 14px', background: modeActuel === 'manuel' ? '#F59E0B' : 'transparent', color: modeActuel === 'manuel' ? '#fff' : '#64748B', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                style={{ padding: '5px 14px', background: modeActuel === 'manuel' ? '#F59E0B' : 'transparent', color: modeActuel === 'manuel' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
                 Manuel
               </button>
             </div>
           )}
 
-          {/* Bouton arret d'urgence (admin + responsable) */}
+          {/* Bouton arrêt d'urgence (admin + responsable) */}
           {machineSelectionnee && etatMachine === 'en_marche' && (
             <button onClick={() => setConfirmerArret(true)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(220,38,38,0.25)' }}>
               <AlertOctagon size={13} />
-              Arret d'urgence
+              Arrêt d'urgence
             </button>
           )}
 
-          {/* Bouton redemarrage (admin + responsable) */}
+          {/* Bouton redémarrage (admin + responsable) */}
           {machineSelectionnee && etatMachine === 'arretee' && peutChangerMode && (
             <button onClick={redemarrerMachine}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(16,185,129,0.25)' }}>
               <RotateCw size={13} />
-              Redemarrer
+              Redémarrer
             </button>
           )}
         </div>
       )}
 
-      {/* Barre dediee a l'operateur : juste l'arret d'urgence */}
+      {/* Barre dédiée à l'opérateur : juste l'arrêt d'urgence */}
       {role === 'operateur' && machineSelectionnee && etatMachine === 'en_marche' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
           <button onClick={() => setConfirmerArret(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(220,38,38,0.3)' }}>
             <AlertOctagon size={16} />
-            ARRET D'URGENCE
+            ARRÊT D'URGENCE
           </button>
         </div>
       )}
 
-      {/* Operateur - machine arretee */}
+      {/* Opérateur - machine arrêtée */}
       {role === 'operateur' && machineSelectionnee && etatMachine === 'arretee' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
           <div style={{ padding: '7px 14px', background: '#F8FAFC', borderLeft: '4px solid #DC2626', borderRadius: '0 8px 8px 0', fontSize: 12, color: '#475569', fontWeight: 500 }}>
-            Machine arretee — contactez le responsable maintenance
+            Machine arrêtée — contactez le responsable maintenance
           </div>
         </div>
       )}
 
-      {/* Carte operateurs compacte (admin + responsable) */}
+      {/* Carte opérateurs compacte (admin + responsable) */}
       {(role === 'admin' || role === 'responsable_maintenance') && machineSelectionnee && (
         <div style={{ padding: '8px 14px', background: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.04)', marginBottom: 10, border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Users size={12} color="#94A3B8" />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {operateursMachine.length === 0 ? 'Aucun operateur' : `${operateursMachine.length} op.`}
+              <Users size={12} color="#475569" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                {operateursMachine.length === 0 ? 'Aucun opérateur' : `${operateursMachine.length} op.`}
               </span>
             </div>
             {operateursMachine.map(a => {
-              const nom = a.operateur_id?.nom || 'Operateur';
+              const nom = a.operateur_id?.nom || 'Opérateur';
               return (
                 <div key={a._id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 8px 2px 3px', background: '#F8FAFC', borderRadius: 20, border: '1px solid #E2E8F0' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#0891B2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 9, fontWeight: 600 }}>
@@ -292,7 +292,7 @@ export default function Dashboard() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0' }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: modeActuel === 'auto' ? '#4F46E5' : '#F59E0B' }} />
-            <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
+            <span style={{ fontSize: 10, color: '#475569', fontWeight: 600 }}>
               {modeActuel === 'auto' ? 'Auto' : 'Manuel'}
             </span>
           </div>
@@ -307,31 +307,29 @@ export default function Dashboard() {
       )}
 
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-        {/* Colonne gauche : Capteurs + Alertes */}
-        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Cartes capteurs */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-            {capteurs.map((c, i) => <CarteCapteur key={i} capteur={c} />)}
-            {capteurs.length === 0 && (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: '#64748B', fontSize: 13, background: '#fff', borderRadius: 12, border: '2px dashed #E2E8F0' }}>
-                En attente des donnees capteurs...
-              </div>
-            )}
+      {/* Cartes capteurs — pleine largeur, légèrement plus grandes */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 18, marginBottom: 24 }}>
+        {capteurs.map((c, i) => <CarteCapteur key={i} capteur={c} />)}
+        {capteurs.length === 0 && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: '#475569', fontSize: 13, background: '#fff', borderRadius: 12, border: '2px dashed #E2E8F0' }}>
+            En attente des données capteurs...
           </div>
+        )}
+      </div>
 
-          {/* Alertes */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#0F172A' }}>
-              <span>Alertes recentes</span>
-              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 10, minWidth: 20, textAlign: 'center' }}>{alertes.length}</span>
-            </div>
-            <CarteAlertes alertes={alertes} onResoudre={resoudre} onIgnorer={ignorer} onSupprimer={supprimer} limite={4} peutResoudre={peutResoudre} />
+      {/* Ligne basse : Alertes + Actionneurs côte à côte */}
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        {/* Alertes */}
+        <div style={{ flex: 2, background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#0F172A' }}>
+            <span>Alertes récentes</span>
+            <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 12, fontWeight: 700, padding: '2px 10px', borderRadius: 10, minWidth: 20, textAlign: 'center' }}>{alertes.length}</span>
           </div>
+          <CarteAlertes alertes={alertes} onResoudre={resoudre} onIgnorer={ignorer} onSupprimer={supprimer} limite={4} peutResoudre={peutResoudre} />
         </div>
 
-        {/* Colonne droite : Actionneurs */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 320 }}>
+        {/* Actionneurs */}
+        <div style={{ flex: 1, minWidth: 280 }}>
           {machineId && <CarteActionneurs machineId={machineId} mode={modeActuel} etatMachine={etatMachine} />}
         </div>
       </div>

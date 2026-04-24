@@ -11,8 +11,8 @@ export default function PanneauIA({ analyse, onVoirDetails }: Props) {
 
   if (analyse.mode === 'degrade') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#F1F5F9', border: '0.5px solid #CBD5E1', borderLeft: '3px solid #64748B', borderRadius: '0 10px 10px 0' }}>
-        <Brain size={18} color="#64748B" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#F1F5F9', border: '0.5px solid #CBD5E1', borderLeft: '3px solid #475569', borderRadius: '0 10px 10px 0' }}>
+        <Brain size={18} color="#475569" />
         <div style={{ fontSize: 12, color: '#475569' }}>Service IA non connecte — mode degrade actif</div>
       </div>
     );
@@ -45,7 +45,7 @@ export default function PanneauIA({ analyse, onVoirDetails }: Props) {
         <Icone size={16} color={iconeColor} style={{ flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>Analyse IA</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 }}>Analyse IA</span>
             <span style={{ padding: '1px 6px', background: accentColor, color: '#fff', fontSize: 10, fontWeight: 600, borderRadius: 8 }}>{labelText}</span>
           </div>
           <div style={{ fontSize: 12, color: '#0F172A', fontWeight: 500 }}>{cause}</div>
