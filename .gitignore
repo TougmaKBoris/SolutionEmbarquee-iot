@@ -78,3 +78,6 @@ coverage/
 *BACKUP*
 "Projet de Developpement Industrielle - backup*"
 *.tsbuildinfo
+
+# ============ Scripts utilitaires locaux ============
+frontend-iot/revert_style.js
