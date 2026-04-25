@@ -4,6 +4,7 @@ import { utiliserAuth } from '../contexte/ContexteAuthentification';
 import utiliserMachines from '../crochets/utiliserMachines';
 import utiliserCapteurs from '../crochets/utiliserCapteurs';
 import utiliserAlertes from '../crochets/utiliserAlertes';
+import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
 import CarteCapteur from '../components/capteurs/CarteCapteur';
 import CarteActionneurs from '../components/actionneurs/CarteActionneurs';
 import CarteAlertes from '../components/alertes/CarteAlertes';
@@ -130,6 +131,8 @@ export default function Dashboard() {
     }
   };
 
+  const isMobile = utiliserTailleEcran();
+
   const allerVersAnalyseIA = () => {
     navigate('/analyse-ia');
   };
@@ -173,28 +176,28 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', marginBottom: isMobile ? 16 : 24, gap: isMobile ? 10 : 0 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>{role === 'operateur' ? 'Ma machine' : 'Tableau de bord'}</h1>
-          <p style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>Surveillance en temps réel des équipements</p>
+          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>{role === 'operateur' ? 'Ma machine' : 'Tableau de bord'}</h1>
+          <p style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>Surveillance en temps réel des équipements</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 16, flexWrap: 'wrap' }}>
           {machineSelectionnee && etatMachine === 'en_marche' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #D1FAE5', background: '#ECFDF5' }}>
-              <Activity size={18} color="#10B981" />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>Système actif</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 24, border: '1px solid #D1FAE5', background: '#ECFDF5' }}>
+              <Activity size={16} color="#10B981" />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#059669' }}>Système actif</span>
             </div>
           )}
           {machineSelectionnee && etatMachine === 'arretee' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, border: '1px solid #FECACA', background: '#FEF2F2' }}>
-              <AlertOctagon size={18} color="#DC2626" />
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#DC2626' }}>Machine arrêtée</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 24, border: '1px solid #FECACA', background: '#FEF2F2' }}>
+              <AlertOctagon size={16} color="#DC2626" />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#DC2626' }}>Machine arrêtée</span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, color: '#475569', fontWeight: 500, padding: '8px 16px', background: '#fff', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-            <Clock size={16} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', fontWeight: 500, padding: '6px 12px', background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0' }}>
+            <Clock size={14} />
             <span>{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-            <span style={{ fontSize: 14, color: '#475569', marginLeft: 4 }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            {!isMobile && <span style={{ fontSize: 12, color: '#64748B', marginLeft: 4 }}>{now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</span>}
           </div>
         </div>
       </div>
@@ -318,7 +321,7 @@ export default function Dashboard() {
       </div>
 
       {/* Ligne basse : Alertes + Actionneurs côte à côte */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20, alignItems: 'flex-start' }}>
         {/* Alertes */}
         <div style={{ flex: 2, background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 16, fontWeight: 700, marginBottom: 16, color: '#0F172A' }}>
@@ -329,7 +332,7 @@ export default function Dashboard() {
         </div>
 
         {/* Actionneurs */}
-        <div style={{ flex: 1, minWidth: 280 }}>
+        <div style={{ flex: 1, minWidth: isMobile ? 'unset' : 280, width: isMobile ? '100%' : 'auto' }}>
           {machineId && <CarteActionneurs machineId={machineId} mode={modeActuel} etatMachine={etatMachine} />}
         </div>
       </div>

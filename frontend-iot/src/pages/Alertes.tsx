@@ -4,6 +4,7 @@ import utiliserMachines from '../crochets/utiliserMachines';
 import { utiliserAuth } from '../contexte/ContexteAuthentification';
 import CarteAlertes from '../components/alertes/CarteAlertes';
 import api from '../services/api';
+import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
 
 export default function PageAlertes() {
   const { utilisateur } = utiliserAuth();
@@ -32,6 +33,7 @@ export default function PageAlertes() {
     : (filtreMachine || undefined);
   const { alertes, resoudre, ignorer, supprimer, rafraichir } = utiliserAlertes(machineIdFiltre);
 
+  const isMobile = utiliserTailleEcran();
   const peutResoudre = role === 'admin' || role === 'responsable_maintenance';
 
   const purgerTout = async () => {
@@ -64,14 +66,14 @@ export default function PageAlertes() {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <div className="en-tete-page">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Alertes{role === 'operateur' ? ' — Ma machine' : ''}</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>{alertes.length} alerte(s) non résolue(s)</p>
+          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700 }}>Alertes{role === 'operateur' ? ' — Ma machine' : ''}</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>{alertes.length} alerte(s) non résolue(s)</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="en-tete-page-actions">
           {role !== 'operateur' && (
-            <select value={filtreMachine} onChange={e => setFiltreMachine(e.target.value)} style={{ width: 200 }}>
+            <select value={filtreMachine} onChange={e => setFiltreMachine(e.target.value)}>
               <option value="">Toutes les machines</option>
               {machines.map(m => <option key={m._id} value={m._id}>{m.nom}</option>)}
             </select>

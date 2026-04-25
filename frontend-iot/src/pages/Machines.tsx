@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import utiliserMachines from '../crochets/utiliserMachines';
+import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
 import api from '../services/api';
 import { Plus, Trash2, Wifi, WifiOff, Cpu, AlertCircle, Radio, X, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -77,6 +78,7 @@ export default function Machines() {
     }
   };
 
+  const isMobile = utiliserTailleEcran();
   const nomMachineASupprimer = machines.find(m => m._id === confirmerSuppression)?.nom || 'cette machine';
 
   const nbEnLigne = machines.filter(m => m.statut === 'en_ligne').length;
@@ -85,7 +87,7 @@ export default function Machines() {
   const CheckboxGrp = ({ titre, icone, items, selected, onToggle }: any) => (
     <div style={{ marginTop: 16 }}>
       <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 10 }}>{icone} {titre}</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div className="grille-2col">
         {items.map((item: string) => (
           <label key={item} onClick={() => onToggle(item)}
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, border: `1px solid ${selected.includes(item) ? '#4F46E5' : '#E2E8F0'}`, background: selected.includes(item) ? 'rgba(79,70,229,0.08)' : '#fff', cursor: 'pointer', fontSize: 14, color: selected.includes(item) ? '#4F46E5' : '#64748B', transition: 'all 0.2s', fontWeight: selected.includes(item) ? 500 : 400 }}>
@@ -128,19 +130,21 @@ export default function Machines() {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <div className="en-tete-page">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>Gestion des machines</h1>
-          <p style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Configurer les machines industrielles du système</p>
+          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>Gestion des machines</h1>
+          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Configurer les machines industrielles du système</p>
         </div>
-        <button onClick={() => setFormulaire(!formulaire)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#2563EB', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.2)' }}>
-          <Plus size={18} /> Nouvelle machine
-        </button>
+        <div className="en-tete-page-actions">
+          <button onClick={() => setFormulaire(!formulaire)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: '#2563EB', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.2)' }}>
+            <Plus size={18} /> Nouvelle machine
+          </button>
+        </div>
       </div>
 
       {/* Cartes compteurs machines */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div className="grille-stats-3" style={{ marginBottom: 24 }}>
         <div style={{ background: '#fff', borderRadius: 12, padding: '20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 4px -1px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
@@ -215,7 +219,7 @@ export default function Machines() {
           <div style={{ marginTop: 16 }}>
             <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 8 }}>+ Capteur personnalisé</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: 8 }}>
+              <div className="grille-capteur-custom">
                 <input placeholder="Nom (ex: presence, compteur_pieces)" value={nvCapteur.type} onChange={e => setNvCapteur(p => ({ ...p, type: e.target.value }))} style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13 }} />
                 <select value={nvCapteur.type_donnee} onChange={e => setNvCapteur(p => ({ ...p, type_donnee: e.target.value }))}
                   style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13, background: '#fff' }}>
@@ -225,7 +229,7 @@ export default function Machines() {
                 </select>
               </div>
               {nvCapteur.type_donnee !== 'binaire' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '80px 80px 80px auto', gap: 8 }}>
+                <div className="grille-valeurs-custom">
                   <input placeholder="Unité" value={nvCapteur.unite} onChange={e => setNvCapteur(p => ({ ...p, unite: e.target.value }))} style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13 }} />
                   <input type="number" placeholder="Min" value={nvCapteur.valeur_min} onChange={e => setNvCapteur(p => ({ ...p, valeur_min: e.target.value }))} style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13 }} />
                   <input type="number" placeholder="Max" value={nvCapteur.valeur_max} onChange={e => setNvCapteur(p => ({ ...p, valeur_max: e.target.value }))} style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13 }} />
