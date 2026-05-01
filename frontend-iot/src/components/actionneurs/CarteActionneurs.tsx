@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { getSocket } from '../../services/socket';
 import { Actionneur } from '../../types';
 import { Power, Lock } from 'lucide-react';
 
@@ -28,6 +29,34 @@ export default function CarteActionneurs({ machineId, mode = 'auto', etatMachine
   };
 
   useEffect(() => { charger(); }, [machineId]);
+
+  // BUG 6 FIX : Ecouter les mises a jour temps reel des actionneurs et de l'etat machine
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleActionneurUpdate = (data: { machine_id: string; type: string; etat: boolean }) => {
+      if (data.machine_id === machineId) {
+        setActionneurs(prev => prev.map(a =>
+          a.type === data.type ? { ...a, etat: data.etat } : a
+        ));
+      }
+    };
+
+    const handleEtatChange = (data: { machine_id: string; etat?: string }) => {
+      if (data.machine_id === machineId && data.etat === 'arretee') {
+        // Recharger tous les actionneurs car l'arret d'urgence les met tous a false
+        charger();
+      }
+    };
+
+    socket.on('actionneur:update', handleActionneurUpdate);
+    socket.on('machine:etatChange', handleEtatChange);
+
+    return () => {
+      socket.off('actionneur:update', handleActionneurUpdate);
+      socket.off('machine:etatChange', handleEtatChange);
+    };
+  }, [machineId]);
 
   const toggle = async (type: string, etatActuel: boolean) => {
     if (desactive) return;

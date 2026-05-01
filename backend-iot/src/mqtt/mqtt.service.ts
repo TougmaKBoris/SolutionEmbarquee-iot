@@ -49,6 +49,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         if (err) this.logger.error('Erreur subscribe actionneurs:', err.message);
         else this.logger.log('Subscribe a actionneurs/+/+/status');
       });
+      // BUG 7 FIX : Souscrire au feedback d'état machine depuis l'ESP32
+      this.client.subscribe('machines/+/etat/status', (err) => {
+        if (err) this.logger.error('Erreur subscribe machines etat:', err.message);
+        else this.logger.log('Subscribe a machines/+/etat/status');
+      });
     });
 
     this.client.on('error', (err) => {
@@ -97,6 +102,37 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         this.logger.error(`Payload actionneur invalide : ${payload}`);
       }
     }
+
+    // BUG 7 FIX : machines/{machineCode}/etat/status — feedback ESP32
+    if (parties[0] === 'machines' && parties.length === 4 && parties[2] === 'etat' && parties[3] === 'status') {
+      const machineCode = parties[1];
+      this.logger.log(`Feedback etat machine recu : ${machineCode} — ${payload}`);
+      try {
+        const data = JSON.parse(payload);
+        const machine = await this.machineModel.findOne({ code: machineCode }).exec();
+        if (machine) {
+          machine.etat = data.etat;
+          if (data.etat === 'en_marche') machine.statut = 'en_ligne';
+          await machine.save();
+          const mid = machine._id.toString();
+          this.tempsReelGateway.emitToMachine(mid, 'machine:etatChange', {
+            machine_id: mid,
+            mode: machine.mode,
+            etat: data.etat,
+            statut: machine.statut,
+          });
+          this.tempsReelGateway.emitToAll('machine:etatChange', {
+            machine_id: mid,
+            mode: machine.mode,
+            etat: data.etat,
+            statut: machine.statut,
+          });
+          this.logger.log(`Etat machine ${machine.nom} mis a jour via feedback MQTT : ${data.etat}`);
+        }
+      } catch (e) {
+        this.logger.error(`Payload feedback machine invalide : ${payload}`);
+      }
+    }
   }
 
   private async traiterDonneeCapteur(machineId: string, typeCapteur: string, payload: string) {
@@ -126,7 +162,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
 
     const mid = machine._id.toString();
-    const mcode = machine.code;
 
     if (machine.statut !== 'en_ligne') return;
 
@@ -144,7 +179,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       timestamp: new Date(),
     });
 
-    // Mise a jour liveData
     const readings = this.liveData.get(mid) || [];
     const idx = readings.findIndex(r => r.type === typeCapteur);
     const reading = {
@@ -158,13 +192,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     else readings.push(reading);
     this.liveData.set(mid, readings);
 
-    // Emettre vers le frontend via Socket.IO
     this.tempsReelGateway.emitToMachine(mid, 'capteurs:update', {
       machine_id: mid,
       capteurs: readings,
     });
 
-    // Verifier les seuils
     await this.verifierSeuils(mid, machine.nom, typeCapteur, data.valeur, data.unite);
   }
 
@@ -219,7 +251,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         alerteExistante.niveau = niveau;
         alerteExistante.message = message;
 
-        // Email si escalade attention → critique et pas encore envoyé
         if (niveau === 'critique' && ancienNiveau !== 'critique' && !alerteExistante.email_envoye) {
           alerteExistante.email_envoye = true;
           await alerteExistante.save();
@@ -272,10 +303,10 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishCommande(machineId: string, typeActionneur: string, etat: boolean) {
+  async publishCommande(machineId: string, typeActionneur: string, etat: boolean): Promise<boolean> {
     if (!this.client || !this.client.connected) {
       this.logger.warn('MQTT non connecte — commande non envoyee');
-      return;
+      return false;
     }
 
     const machine = await this.machineModel.findById(machineId).exec();
@@ -283,9 +314,37 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
 
     const topic = `actionneurs/${identifier}/${typeActionneur}`;
     const payload = JSON.stringify({ etat });
-    this.client.publish(topic, payload, { qos: 1 }, (err) => {
-      if (err) this.logger.error(`Erreur publish MQTT : ${err.message}`);
-      else this.logger.debug(`Commande publiee : ${topic} — ${payload}`);
+    return new Promise<boolean>((resolve) => {
+      this.client.publish(topic, payload, { qos: 1 }, (err) => {
+        if (err) {
+          this.logger.error(`Erreur publish MQTT : ${err.message}`);
+          resolve(false);
+        } else {
+          this.logger.debug(`Commande publiee : ${topic} — ${payload}`);
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  async publishEtatMachine(machineCode: string, etat: string): Promise<boolean> {
+    if (!this.client || !this.client.connected) {
+      this.logger.warn('MQTT non connecte — etat machine non envoye');
+      return false;
+    }
+
+    const topic = `machines/${machineCode}/etat`;
+    const payload = JSON.stringify({ etat });
+    return new Promise<boolean>((resolve) => {
+      this.client.publish(topic, payload, { qos: 1 }, (err) => {
+        if (err) {
+          this.logger.error(`Erreur publish etat machine : ${err.message}`);
+          resolve(false);
+        } else {
+          this.logger.debug(`Etat machine publie : ${topic} — ${payload}`);
+          resolve(true);
+        }
+      });
     });
   }
 

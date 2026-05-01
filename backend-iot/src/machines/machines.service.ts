@@ -14,6 +14,8 @@ import { Evenement, EvenementDocument } from '../evenements/entities/evenement.e
 import { EvenementsService } from '../evenements/evenements.service';
 import { MachineSupprimee, MachineSupprimeeDocument } from '../common/initialisation/machine-supprimee.schema';
 import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
+// AJOUT : Import du MqttService
+import { MqttService } from '../mqtt/mqtt.service';
 
 @Injectable()
 export class MachinesService {
@@ -37,6 +39,8 @@ export class MachinesService {
     @InjectModel(MachineSupprimee.name) private machineSupprimeeModel: Model<MachineSupprimeeDocument>,
     private readonly evenementsService: EvenementsService,
     private readonly tempsReelGateway: TempsReelGateway,
+    // AJOUT : Injection du MqttService
+    private readonly mqttService: MqttService,
   ) {}
 
   async findAll() { return this.machineModel.find().exec(); }
@@ -50,11 +54,9 @@ export class MachinesService {
   async create(dto: CreateMachineDto) {
     const { capteursConfig, ...machineData } = dto;
 
-    // Generation automatique du code si absent
     if (!machineData.code) {
       machineData.code = await this.genererCodeUnique();
     } else {
-      // Verifier l'unicite si fourni
       const existe = await this.machineModel.findOne({ code: machineData.code }).exec();
       if (existe) throw new BadRequestException(`Le code machine ${machineData.code} est deja utilise`);
     }
@@ -139,7 +141,6 @@ export class MachinesService {
       metadata: { ancien_mode: ancienMode, nouveau_mode: nouveauMode },
     });
 
-    // Emettre via Socket.IO
     this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
       machine_id: id,
       mode: nouveauMode,
@@ -187,7 +188,6 @@ export class MachinesService {
       metadata: { actionneurs_forces_off: true },
     });
 
-    // Emettre via Socket.IO
     this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
       machine_id: id,
       mode: machine.mode,
@@ -199,7 +199,18 @@ export class MachinesService {
       etat: 'arretee',
     });
 
-    return { message: `Arret d'urgence applique sur ${machine.nom}`, machine };
+    // BUG 2+5 FIX : Publier via MQTT avec await + actionneurs individuels
+    let mqtt_envoye = false;
+    if (machine.source === 'mqtt') {
+      mqtt_envoye = await this.mqttService.publishEtatMachine(machine.code, 'arretee');
+
+      // Publier l'arret de chaque actionneur individuellement
+      for (const typeActionneur of machine.actionneurs) {
+        await this.mqttService.publishCommande(id, typeActionneur, false);
+      }
+    }
+
+    return { message: `Arret d'urgence applique sur ${machine.nom}`, machine, mqtt_envoye };
   }
 
   async redemarrer(id: string, utilisateur?: { id: string; nom: string; role: string }) {
@@ -210,7 +221,6 @@ export class MachinesService {
       throw new BadRequestException('La machine est deja en marche');
     }
 
-    // Résoudre toutes les alertes non résolues pour remettre le système à zéro
     await this.alerteModel.updateMany(
       { machine_id: new Types.ObjectId(id), resolue: false },
       { resolue: true, resolue_le: new Date() },
@@ -230,7 +240,6 @@ export class MachinesService {
       description: `Machine ${machine.nom} redemarree`,
     });
 
-    // Emettre via Socket.IO
     this.tempsReelGateway.emitToMachine(id, 'machine:etatChange', {
       machine_id: id,
       mode: machine.mode,
@@ -244,14 +253,20 @@ export class MachinesService {
       statut: 'en_ligne',
     });
 
-    return { message: `Machine ${machine.nom} redemarree`, machine };
+    // BUG 2 FIX : Publier via MQTT avec await
+    let mqtt_envoye = false;
+    if (machine.source === 'mqtt') {
+      mqtt_envoye = await this.mqttService.publishEtatMachine(machine.code, 'en_marche');
+    }
+
+    return { message: `Machine ${machine.nom} redemarree`, machine, mqtt_envoye };
   }
 
   private async genererCodeUnique(): Promise<string> {
     let code = '';
     let existe = true;
     while (existe) {
-      const num = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
+      const num = Math.floor(1000 + Math.random() * 9000);
       code = `M-${num}`;
       const machine = await this.machineModel.findOne({ code }).exec();
       if (!machine) existe = false;

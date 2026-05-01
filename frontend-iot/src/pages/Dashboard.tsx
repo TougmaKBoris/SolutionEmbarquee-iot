@@ -100,13 +100,21 @@ export default function Dashboard() {
   const declencherArretUrgence = async () => {
     if (!machineId) return;
     try {
-      await api.post(`/machines/${machineId}/arret-urgence`);
+      const res = await api.post(`/machines/${machineId}/arret-urgence`);
       setMachinesEtat(prev => ({
         ...prev,
         [machineId]: { ...prev[machineId], etat: 'arretee' },
       }));
       setConfirmerArret(false);
-      setMessageInfo("Arrêt d'urgence appliqué. Une alerte critique a été créée.");
+      // BUG 3 FIX : Feedback MQTT
+      const mqttOk = res.data?.mqtt_envoye;
+      if (mqttOk === true) {
+        setMessageInfo("Arrêt d'urgence appliqué. Commande MQTT envoyée à l'ESP32 ✓");
+      } else if (mqttOk === false) {
+        setMessageInfo("⚠ Arrêt d'urgence en base, mais MQTT non disponible — vérifiez l'ESP32");
+      } else {
+        setMessageInfo("Arrêt d'urgence appliqué. Une alerte critique a été créée.");
+      }
       setTimeout(() => setMessageInfo(null), 5000);
     } catch (err: any) {
       setMessageInfo(err.response?.data?.message || "Erreur lors de l'arrêt d'urgence");
@@ -118,12 +126,20 @@ export default function Dashboard() {
   const redemarrerMachine = async () => {
     if (!machineId || !peutChangerMode) return;
     try {
-      await api.post(`/machines/${machineId}/redemarrer`);
+      const res = await api.post(`/machines/${machineId}/redemarrer`);
       setMachinesEtat(prev => ({
         ...prev,
         [machineId]: { ...prev[machineId], etat: 'en_marche' },
       }));
-      setMessageInfo('Machine redémarrée avec succès');
+      // BUG 3 FIX : Feedback MQTT
+      const mqttOk = res.data?.mqtt_envoye;
+      if (mqttOk === true) {
+        setMessageInfo('Machine redémarrée. Commande MQTT envoyée à l\'ESP32 ✓');
+      } else if (mqttOk === false) {
+        setMessageInfo('⚠ Redémarrage en base, mais MQTT non disponible — vérifiez l\'ESP32');
+      } else {
+        setMessageInfo('Machine redémarrée avec succès');
+      }
       setTimeout(() => setMessageInfo(null), 3000);
     } catch (err: any) {
       setMessageInfo(err.response?.data?.message || 'Erreur lors du redémarrage');

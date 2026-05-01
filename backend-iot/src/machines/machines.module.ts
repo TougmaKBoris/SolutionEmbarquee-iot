@@ -11,6 +11,7 @@ import { CapteurData, CapteurDataSchema } from '../capteurs/entities/capteur-dat
 import { Evenement, EvenementSchema } from '../evenements/entities/evenement.entity';
 import { EvenementsModule } from '../evenements/evenements.module';
 import { MachineSupprimee, MachineSupprimeeSchema } from '../common/initialisation/machine-supprimee.schema';
+import { MqttModule } from '../mqtt/mqtt.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MachineSupprimee, MachineSupprimeeSchema } from '../common/initialisati
       { name: MachineSupprimee.name, schema: MachineSupprimeeSchema },
     ]),
     EvenementsModule,
+    MqttModule,
   ],
   controllers: [MachinesController],
   providers: [MachinesService],
