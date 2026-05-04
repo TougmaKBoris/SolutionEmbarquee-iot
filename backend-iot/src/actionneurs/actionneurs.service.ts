@@ -60,7 +60,7 @@ export class ActionneursService {
 
     // Si machine MQTT, publier la commande vers le vrai actionneur
     if (machine.source === 'mqtt') {
-      this.mqttService.publishCommande(machineId, dto.type, dto.etat);
+      await this.mqttService.publishCommande(machineId, dto.type, dto.etat);
     }
 
     return actionneur;

@@ -24,7 +24,7 @@ export class CapteursService {
     private readonly tempsReelGateway: TempsReelGateway,
   ) {}
 
-  private genererValeur(type: string, seuil?: any): { valeur: number; unite: string } {
+  private genererValeur(type: string, seuil?: any, machineId?: string): { valeur: number; unite: string } {
     switch (type) {
       case 'temperature': return { valeur: +(55 + Math.random() * 35).toFixed(1), unite: '°C' };
       case 'courant': return { valeur: +(2 + Math.random() * 4).toFixed(2), unite: 'A' };
@@ -37,10 +37,11 @@ export class CapteursService {
             return { valeur: Math.random() > 0.2 ? 1 : 0, unite: seuil.unite || '' };
           }
           if (typeDonnee === 'compteur') {
-            const derniere = this.compteursEtat.get(type) ?? seuil.valeur_min;
+            const cle = machineId ? `${machineId}-${type}` : type;
+            const derniere = this.compteursEtat.get(cle) ?? seuil.valeur_min;
             const increment = Math.floor(Math.random() * 5);
             const nvValeur = Math.min(derniere + increment, seuil.valeur_max);
-            this.compteursEtat.set(type, nvValeur);
+            this.compteursEtat.set(cle, nvValeur);
             return { valeur: nvValeur, unite: seuil.unite || '' };
           }
           const range = seuil.valeur_max - seuil.valeur_min;
@@ -61,7 +62,7 @@ export class CapteursService {
 
       const readings = [];
       for (const type of machine.capteurs) {
-        const { valeur, unite } = this.genererValeur(type, seuilsMap.get(type));
+        const { valeur, unite } = this.genererValeur(type, seuilsMap.get(type), machine._id.toString());
         const data = await this.capteurDataModel.create({ machine_id: machine._id, type, valeur, unite, timestamp: new Date() });
         const type_donnee = (seuilsMap.get(type) as any)?.type_donnee || 'numerique';
         readings.push({ type, valeur, unite, timestamp: data.timestamp, type_donnee });

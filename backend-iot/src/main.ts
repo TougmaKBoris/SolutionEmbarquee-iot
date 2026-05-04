@@ -20,14 +20,16 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Solution Embarquée IoT')
-    .setDescription('API de supervision industrielle IoT — Machines, Capteurs, Alertes, IA')
-    .setVersion('2.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Solution Embarquée IoT')
+      .setDescription('API de supervision industrielle IoT — Machines, Capteurs, Alertes, IA')
+      .setVersion('2.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
