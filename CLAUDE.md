@@ -21,6 +21,27 @@ cd frontend-iot && npm start
 cd ia-iot && uvicorn main:app --reload --port 8000
 ```
 
+## Protocoles par couche
+
+MQTT n'est **pas** utilisé à tous les niveaux — chaque couche a son protocole :
+
+| Couche | Protocole | Justification |
+|--------|-----------|---------------|
+| Capteur physique (ESP32) → Broker → Backend | **MQTT** (port 1883) | Léger, adapté microcontrôleurs, faible bande passante |
+| Backend → Frontend (données temps réel) | **Socket.IO** (WebSocket, port 3001) | Push bidirectionnel, rooms par machine |
+| Frontend → Backend (API) | **HTTP/REST** (port 3001/api) | Requêtes CRUD classiques (login, machines, alertes…) |
+| Backend → Service IA | **HTTP** (port 8000) | Appel ponctuel fetch vers FastAPI, pas besoin de temps réel |
+
+```
+ESP32  --MQTT-->  Broker  --MQTT-->  Backend NestJS  <--HTTP-->  Service IA Python
+                                          |
+                              Socket.IO / HTTP/REST
+                                          |
+                                   Frontend React
+```
+
+---
+
 ## Lancer les tests backend
 
 ```bash
