@@ -17,6 +17,12 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
   private client: MqttClient | null = null;
   private liveData: Map<string, any[]> = new Map();
 
+  // Délai de grâce après un redémarrage : pas de nouvelle alerte créée
+  // pendant ce délai pour éviter le spam d'emails au redémarrage.
+  // Map<machineId, timestamp_fin_grace>
+  private graceJusqua: Map<string, number> = new Map();
+  private readonly GRACE_DUREE_MS = 8000; // 8 secondes
+
   constructor(
     @InjectModel(CapteurData.name) private capteurDataModel: Model<CapteurDataDocument>,
     @InjectModel(Machine.name) private machineModel: Model<MachineDocument>,
@@ -49,7 +55,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         if (err) this.logger.error('Erreur subscribe actionneurs:', err.message);
         else this.logger.log('Subscribe a actionneurs/+/+/status');
       });
-      // BUG 7 FIX : Souscrire au feedback d'état machine depuis l'ESP32
       this.client.subscribe('machines/+/etat/status', (err) => {
         if (err) this.logger.error('Erreur subscribe machines etat:', err.message);
         else this.logger.log('Subscribe a machines/+/etat/status');
@@ -78,7 +83,30 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Méthode publique appelée par MachinesService.redemarrer()
+   * pour activer le délai de grâce qui supprime les alertes en cascade.
+   */
+  public activerGraceRedemarrage(machineId: string): void {
+    const fin = Date.now() + this.GRACE_DUREE_MS;
+    this.graceJusqua.set(machineId, fin);
+    this.logger.log(`[GRACE] Machine ${machineId} en periode de grace (${this.GRACE_DUREE_MS}ms)`);
+  }
+
+  private estEnGrace(machineId: string): boolean {
+    const fin = this.graceJusqua.get(machineId);
+    if (!fin) return false;
+    if (Date.now() > fin) {
+      this.graceJusqua.delete(machineId);
+      return false;
+    }
+    return true;
+  }
+
   private async traiterMessage(topic: string, payload: string) {
+    // DEBUG : voir TOUS les messages MQTT entrants (à commenter en prod)
+    this.logger.debug(`[MQTT RX] ${topic} → ${payload}`);
+
     const parties = topic.split('/');
 
     // capteurs/{machineId}/{typeCapteur}
@@ -103,7 +131,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    // BUG 7 FIX : machines/{machineCode}/etat/status — feedback ESP32
+    // machines/{machineCode}/etat/status — feedback ESP32
     if (parties[0] === 'machines' && parties.length === 4 && parties[2] === 'etat' && parties[3] === 'status') {
       const machineCode = parties[1];
       this.logger.log(`Feedback etat machine recu : ${machineCode} — ${payload}`);
@@ -111,6 +139,11 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
         const data = JSON.parse(payload);
         const machine = await this.machineModel.findOne({ code: machineCode }).exec();
         if (machine) {
+          // Si on passe de "arretee" à "en_marche", activer la période de grâce
+          if (machine.etat === 'arretee' && data.etat === 'en_marche') {
+            this.activerGraceRedemarrage(machine._id.toString());
+          }
+
           machine.etat = data.etat;
           if (data.etat === 'en_marche') machine.statut = 'en_ligne';
           await machine.save();
@@ -135,6 +168,22 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Retourne l'unite par defaut selon le type de capteur.
+   */
+  private uniteParDefaut(typeCapteur: string): string {
+    const unites: Record<string, string> = {
+      temperature: '°C',
+      courant: 'A',
+      vibration: 'bool',
+      pression: 'bar',
+      energie: 'kWh',
+      humidite: '%',
+      force: 'N',
+    };
+    return unites[typeCapteur.toLowerCase()] || 'unite';
+  }
+
   private async traiterDonneeCapteur(machineId: string, typeCapteur: string, payload: string) {
     let data: { valeur: number; unite: string };
     try {
@@ -144,9 +193,13 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    if (data.valeur === undefined || data.unite === undefined) {
-      this.logger.error(`Payload capteur incomplet : ${payload}`);
+    if (data.valeur === undefined || data.valeur === null) {
+      this.logger.error(`Payload capteur incomplet (valeur manquante) : ${payload}`);
       return;
+    }
+
+    if (!data.unite || (typeof data.unite === 'string' && data.unite.trim() === '')) {
+      data.unite = this.uniteParDefaut(typeCapteur);
     }
 
     const machine = await this.machineModel.findOne({
@@ -156,14 +209,20 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       ]
     }).exec();
 
-    if (!machine || machine.source !== 'mqtt') {
-      this.logger.warn(`Machine [${machineId}] non trouvee ou pas en mode MQTT`);
+    if (!machine) {
+      this.logger.warn(`[REJET] Machine [${machineId}] introuvable en base`);
+      return;
+    }
+    if (machine.source !== 'mqtt') {
+      this.logger.warn(`[REJET] Machine [${machineId}] source='${machine.source}' (attendu: 'mqtt')`);
+      return;
+    }
+    if (machine.statut !== 'en_ligne') {
+      this.logger.warn(`[REJET] Machine [${machineId}] statut='${machine.statut}' (attendu: 'en_ligne')`);
       return;
     }
 
     const mid = machine._id.toString();
-
-    if (machine.statut !== 'en_ligne') return;
 
     const seuil = await this.seuilModel.findOne({
       machine_id: machine._id,
@@ -178,6 +237,8 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       unite: data.unite,
       timestamp: new Date(),
     });
+
+    this.logger.debug(`[OK] Capteur ${typeCapteur}=${data.valeur}${data.unite} enregistre pour ${machine.nom}`);
 
     const readings = this.liveData.get(mid) || [];
     const idx = readings.findIndex(r => r.type === typeCapteur);
@@ -202,6 +263,14 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
 
   private async verifierSeuils(machineId: string, machineNom: string, type: string, valeur: number, unite: string) {
     if (!Types.ObjectId.isValid(machineId)) return;
+
+    // NOUVEAU : si la machine est en période de grâce post-redémarrage,
+    // on ne crée pas de nouvelle alerte (évite le spam d'emails)
+    if (this.estEnGrace(machineId)) {
+      this.logger.debug(`[GRACE] Verification seuil ignoree pour ${machineId}/${type}`);
+      return;
+    }
+
     const seuil = await this.seuilModel.findOne({
       machine_id: new Types.ObjectId(machineId),
       type_capteur: type,
@@ -309,7 +378,12 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
       return false;
     }
 
-    const machine = await this.machineModel.findById(machineId).exec();
+    const machine = await this.machineModel.findOne({
+      $or: [
+        { _id: Types.ObjectId.isValid(machineId) ? new Types.ObjectId(machineId) : null },
+        { code: machineId }
+      ]
+    }).exec();
     const identifier = machine?.code || machineId;
 
     const topic = `actionneurs/${identifier}/${typeActionneur}`;
@@ -331,6 +405,15 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     if (!this.client || !this.client.connected) {
       this.logger.warn('MQTT non connecte — etat machine non envoye');
       return false;
+    }
+
+    // Si la commande est un redémarrage, activer aussi le délai de grâce
+    // (via le code machine, on doit retrouver l'ObjectId)
+    if (etat === 'en_marche') {
+      const machine = await this.machineModel.findOne({ code: machineCode }).exec();
+      if (machine) {
+        this.activerGraceRedemarrage(machine._id.toString());
+      }
     }
 
     const topic = `machines/${machineCode}/etat`;

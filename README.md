@@ -6,7 +6,7 @@
 
 Maintenance prédictive intelligente · Audit trail temps réel · Contrôle multi-rôles
 
-[![Statut](https://img.shields.io/badge/Statut-En%20développement-blue)]()
+[![Statut](https://img.shields.io/badge/Statut-Prêt%20production-brightgreen)]()
 [![Licence](https://img.shields.io/badge/Licence-Académique-green)]()
 [![PFE](https://img.shields.io/badge/PFE-ISET%20Mahdia%202026-orange)]()
 
@@ -151,14 +151,14 @@ graph TB
 
 - **FastAPI** — framework Python asynchrone ultra-rapide
 - **scikit-learn** pour le modèle Random Forest
-- **NumPy** + **Pandas** pour la manipulation de données
+- **NumPy** pour la manipulation de données
 - **joblib** pour la sérialisation du modèle
 
 ### Base de données
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)
 
 - **MongoDB Atlas** — base cloud managée
-- 9 collections : utilisateurs, machines, actionneurs, capteurdatas, seuils, alertes, affectations, evenements
+- 9 collections : utilisateurs, machines, actionneurs, capteurdatas, seuils, alertes, affectations, evenements, machinesupprimees
 
 ---
 
@@ -363,13 +363,15 @@ Ce projet est réalisé dans le cadre du **Projet de Fin d'Études (PFE)** du Ma
 ## 🗺️ Roadmap
 
 ### Phase 1 — Développement logiciel ✅
-- [x] Backend NestJS complet
+- [x] Backend NestJS complet avec tests unitaires
 - [x] Frontend React avec toutes les pages
-- [x] Microservice IA Python
+- [x] Microservice IA Python (Random Forest 95.91%)
 - [x] Mode Auto/Manuel + Arrêt d'urgence (ISO 13850)
 - [x] Audit trail des événements (ISO 13374)
 - [x] Recommandations dynamiques ML + règles métier
 - [x] Historique avec graphiques et journal
+- [x] Notifications par email (Nodemailer + Gmail) pour alertes critiques
+- [x] Support MQTT pour capteurs physiques ESP32 (Phase 2 ready)
 
 ### Phase 2 — Hardware ESP32 🔜
 - [ ] Firmware ESP32 avec lecture des vrais capteurs
@@ -382,10 +384,31 @@ Ce projet est réalisé dans le cadre du **Projet de Fin d'Études (PFE)** du Ma
 - [ ] Synchronisation mode auto/manuel avec l'ESP32
 
 ### Phase 3 — Améliorations futures
-- [ ] Notifications par email pour les alertes critiques
-- [ ] Déploiement en ligne (Vercel + Railway)
 - [ ] Application mobile companion
 - [ ] Support multi-langues (FR/EN/AR)
+- [ ] Déploiement cloud public (Vercel + Railway)
+
+---
+
+## 🚀 Déploiement en production
+
+Pour déployer sur un serveur Linux avec **PM2 + Nginx**, consulte le fichier [`DEPLOIEMENT.md`](DEPLOIEMENT.md) qui couvre :
+- Installation des prérequis (Node.js 18+, Python 3.11+, PM2, Nginx)
+- Configuration des variables d'environnement de production
+- Build et mise en production des 3 services
+- Configuration Nginx (reverse proxy + Socket.IO)
+
+**En résumé :**
+```bash
+# Backend
+cd backend-iot && npm run build && pm2 start ecosystem.config.js
+
+# Service IA
+cd ia-iot && pm2 start "uvicorn main:app --host 0.0.0.0 --port 8000" --name se-iot-ia
+
+# Frontend
+cd frontend-iot && npm run build   # puis copier build/ dans /var/www/se-iot/
+```
 
 ---
 
