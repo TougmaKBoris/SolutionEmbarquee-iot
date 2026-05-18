@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import utiliserMachines from '../crochets/utiliserMachines';
 import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
 import api from '../services/api';
-import { Plus, Trash2, Wifi, WifiOff, Cpu, AlertCircle, Radio, X, Activity } from 'lucide-react';
+import { Plus, Trash2, Wifi, WifiOff, Cpu, AlertCircle, Radio, X, Activity, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const CAPTEURS_DEFAUT = ['temperature', 'courant', 'vibration', 'pression'];
@@ -22,6 +22,7 @@ export default function Machines() {
   const [actionneurCustomListe, setActionneurCustomListe] = useState<string[]>([]);
   const [nvCapteur, setNvCapteur] = useState({ type: '', unite: '', valeur_min: '', valeur_max: '', type_donnee: 'numerique' });
   const [confirmerSuppression, setConfirmerSuppression] = useState<string | null>(null);
+  const [machineEdition, setMachineEdition] = useState<{ id: string; nom: string } | null>(null);
   const [source, setSource] = useState<'simulation' | 'mqtt'>('simulation');
 
   const toggle = (val: string, setter: Function) => setter((prev: string[]) => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
@@ -63,6 +64,18 @@ export default function Machines() {
       setNom(''); setCapteurs([]); setActionneurs([]); setCapteursCustom([]); setActionneurCustomListe([]); setSource('simulation'); setFormulaire(false); rafraichir();
     } catch (err) {
       toast.error('Erreur lors de la création de la machine.');
+    }
+  };
+
+  const renommer = async () => {
+    if (!machineEdition || !machineEdition.nom.trim()) return;
+    try {
+      await api.put(`/machines/${machineEdition.id}`, { nom: machineEdition.nom.trim() });
+      toast.success('Nom modifié avec succès.');
+      setMachineEdition(null);
+      rafraichir();
+    } catch (err) {
+      toast.error('Erreur lors de la modification.');
     }
   };
 
@@ -124,6 +137,38 @@ export default function Machines() {
               <button onClick={supprimer}
                 style={{ padding: '9px 20px', borderRadius: 8, background: '#DC2626', color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
                 Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup renommage machine */}
+      {machineEdition && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: '28px 32px', maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Pencil size={18} color="#2563EB" />
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>Renommer la machine</div>
+            </div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 6, display: 'block' }}>Nouveau nom</label>
+            <input
+              autoFocus
+              value={machineEdition.nom}
+              onChange={e => setMachineEdition(prev => prev ? { ...prev, nom: e.target.value } : null)}
+              onKeyDown={e => { if (e.key === 'Enter') renommer(); if (e.key === 'Escape') setMachineEdition(null); }}
+              style={{ width: '100%', marginBottom: 20 }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setMachineEdition(null)}
+                style={{ padding: '9px 20px', borderRadius: 8, background: '#F1F5F9', color: '#64748B', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+                Annuler
+              </button>
+              <button onClick={renommer}
+                style={{ padding: '9px 20px', borderRadius: 8, background: '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+                Enregistrer
               </button>
             </div>
           </div>
@@ -302,6 +347,12 @@ export default function Machines() {
               <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: m.statut === 'en_ligne' ? '#ECFDF5' : '#F1F5F9', color: m.statut === 'en_ligne' ? '#10B981' : '#64748B' }}>
                 {m.statut === 'en_ligne' ? 'Connecté' : 'Déconnecté'}
               </span>
+              <button onClick={() => setMachineEdition({ id: m._id, nom: m.nom })} title="Renommer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#2563EB')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
+              >
+                <Pencil size={18} />
+              </button>
               <button onClick={() => setConfirmerSuppression(m._id)} title="Supprimer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
