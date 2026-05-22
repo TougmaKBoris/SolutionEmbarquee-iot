@@ -82,6 +82,11 @@ export class InitialisationService implements OnModuleInit {
       }
     }
 
+    await this.machineModel.updateMany(
+      { etat: 'arretee', statut: 'en_ligne' },
+      { statut: 'hors_ligne' },
+    ).exec();
+
     const sana = await this.utilisateurModel.findOne({ email: 'oper1@SE-iot.com' }).exec();
     const machineA = await this.machineModel.findOne({ nom: 'Machine A' }).exec();
     if (sana && machineA) {

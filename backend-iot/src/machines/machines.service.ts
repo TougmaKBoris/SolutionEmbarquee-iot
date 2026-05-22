@@ -160,6 +160,7 @@ export class MachinesService {
     if (!machine) throw new NotFoundException('Machine non trouvee');
 
     machine.etat = 'arretee';
+    machine.statut = 'hors_ligne';
     await machine.save();
 
     await this.actionneurModel.updateMany(
@@ -192,11 +193,13 @@ export class MachinesService {
       machine_id: id,
       mode: machine.mode,
       etat: 'arretee',
+      statut: 'hors_ligne',
     });
     this.tempsReelGateway.emitToAll('machine:etatChange', {
       machine_id: id,
       mode: machine.mode,
       etat: 'arretee',
+      statut: 'hors_ligne',
     });
 
     // BUG 2+5 FIX : Publier via MQTT avec await + actionneurs individuels
