@@ -81,3 +81,7 @@ coverage/
 
 # ============ Scripts utilitaires locaux ============
 frontend-iot/revert_style.js
+
+# ============ Fichiers locaux non versionnés ============
+CLAUDE.md
+DEPLOY-NOTES.md
