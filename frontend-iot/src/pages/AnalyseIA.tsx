@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
+import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
 import { Brain, AlertOctagon, AlertTriangle, CheckCircle, Info, TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
 
 function Sparkline({ valeurs, seuilMax, seuilMin, couleur }: { valeurs: number[], seuilMax: number, seuilMin: number, couleur: string }) {
@@ -92,6 +93,7 @@ export default function AnalyseIA() {
     critiques: triees.filter((a: any) => a.diagnostic?.niveau === 'critique').length,
   };
 
+  const isMobile = utiliserTailleEcran();
   const machineSelectionnee = triees.find((m: any) => m.machine_id === machineSelectionneeId) || triees[0];
 
   const getCouleurs = (niveau: string) => {
@@ -115,19 +117,19 @@ export default function AnalyseIA() {
   return (
     <div style={{ maxWidth: 1200 }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, gap: isMobile ? 10 : 0 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0F172A' }}>Analyse IA</h1>
+          <h1 style={{ fontSize: isMobile ? 20 : 22, fontWeight: 700, color: '#0F172A' }}>Analyse IA</h1>
           <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>Maintenance predictive du parc machines</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#EEEDFE', borderRadius: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#EEEDFE', borderRadius: 20, alignSelf: isMobile ? 'flex-start' : 'auto' }}>
           <Brain size={14} color="#534AB7" />
           <span style={{ fontSize: 11, color: '#3C3489', fontWeight: 600 }}>Maintenance predictive — Random Forest</span>
         </div>
       </div>
 
       {/* Stats globales */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
         <div style={{ background: '#F8FAFC', borderRadius: 8, padding: 14 }}>
           <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Total machines</div>
           <div style={{ fontSize: 22, fontWeight: 700, color: '#0F172A' }}>{stats.total}</div>
@@ -147,7 +149,7 @@ export default function AnalyseIA() {
       </div>
 
       {/* Vue maitre/detail */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 14, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: 14, marginBottom: 20 }}>
 
         {/* Liste a gauche */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -338,7 +340,7 @@ export default function AnalyseIA() {
             )}
 
             {/* Cartes par capteur */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
               {tendances.tendances.map((t: any) => {
                 const alertePrecoce = t.alertePrecoce;
                 const fondCarte = alertePrecoce ? '#FFF8E1' : '#F8FAFC';

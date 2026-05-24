@@ -9,7 +9,10 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+  const corsEnv = process.env.CORS_ORIGIN || 'http://localhost:3000';
+  const corsOrigin = corsEnv.includes(',')
+    ? corsEnv.split(',').map((o) => o.trim())
+    : corsEnv;
   app.enableCors({ origin: corsOrigin });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(

@@ -186,7 +186,7 @@ export default function Dashboard() {
 
       {/* Toast info */}
       {messageInfo && (
-        <div style={{ position: 'fixed', top: 20, right: 20, background: '#0F172A', color: '#fff', padding: '12px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500, zIndex: 999, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
+        <div style={{ position: 'fixed', top: isMobile ? 66 : 20, left: isMobile ? 16 : 'auto', right: isMobile ? 16 : 20, background: '#0F172A', color: '#fff', padding: '12px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500, zIndex: 999, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
           {messageInfo}
         </div>
       )}
@@ -220,49 +220,55 @@ export default function Dashboard() {
 
       {/* Barre sélecteur machines + mode + arrêt urgence (admin + responsable) */}
       {role !== 'operateur' && machines.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-          {machines.map((m: any) => (
-            <button key={m._id} onClick={() => setMachineId(m._id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: m._id === machineId ? 'none' : '1px solid #E2E8F0', background: m._id === machineId ? '#2563EB' : '#fff', color: m._id === machineId ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.2s', boxShadow: m._id === machineId ? '0 4px 12px rgba(37,99,235,0.2)' : '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: (m.statut === 'en_ligne' && m.etat === 'en_marche') ? '#10B981' : '#EF4444' }} />
-              {m.nom}
-            </button>
-          ))}
-
-          <div style={{ flex: 1 }} />
-
-          {/* Toggle mode auto/manuel */}
-          {machineSelectionnee && peutChangerMode && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: 3, background: '#F1F5F9', borderRadius: 8, border: '1px solid #E2E8F0' }}>
-              <button
-                onClick={() => changerMode('auto')}
-                style={{ padding: '5px 14px', background: modeActuel === 'auto' ? '#4F46E5' : 'transparent', color: modeActuel === 'auto' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
-                Auto
+        <div style={{ marginBottom: 20 }}>
+          {/* Sélecteur machines */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: machineSelectionnee && peutChangerMode ? 8 : 0 }}>
+            {machines.map((m: any) => (
+              <button key={m._id} onClick={() => setMachineId(m._id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, border: m._id === machineId ? 'none' : '1px solid #E2E8F0', background: m._id === machineId ? '#2563EB' : '#fff', color: m._id === machineId ? '#fff' : '#475569', cursor: 'pointer', transition: 'all 0.2s', boxShadow: m._id === machineId ? '0 4px 12px rgba(37,99,235,0.2)' : '0 1px 2px rgba(0,0,0,0.05)' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: (m.statut === 'en_ligne' && m.etat === 'en_marche') ? '#10B981' : '#EF4444' }} />
+                {m.nom}
               </button>
-              <button
-                onClick={() => changerMode('manuel')}
-                style={{ padding: '5px 14px', background: modeActuel === 'manuel' ? '#F59E0B' : 'transparent', color: modeActuel === 'manuel' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
-                Manuel
-              </button>
+            ))}
+          </div>
+
+          {/* Contrôles machine (mode + urgence) sur une ligne séparée sur mobile */}
+          {machineSelectionnee && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+              {/* Toggle mode auto/manuel */}
+              {peutChangerMode && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: 3, background: '#F1F5F9', borderRadius: 8, border: '1px solid #E2E8F0', flex: isMobile ? 1 : 'none' }}>
+                  <button
+                    onClick={() => changerMode('auto')}
+                    style={{ flex: isMobile ? 1 : 'none', padding: '5px 14px', background: modeActuel === 'auto' ? '#4F46E5' : 'transparent', color: modeActuel === 'auto' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                    Auto
+                  </button>
+                  <button
+                    onClick={() => changerMode('manuel')}
+                    style={{ flex: isMobile ? 1 : 'none', padding: '5px 14px', background: modeActuel === 'manuel' ? '#F59E0B' : 'transparent', color: modeActuel === 'manuel' ? '#fff' : '#475569', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                    Manuel
+                  </button>
+                </div>
+              )}
+
+              {/* Bouton arrêt d'urgence */}
+              {etatMachine === 'en_marche' && (
+                <button onClick={() => setConfirmerArret(true)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 14px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(220,38,38,0.25)', flex: isMobile ? 1 : 'none' }}>
+                  <AlertOctagon size={13} />
+                  Arrêt d'urgence
+                </button>
+              )}
+
+              {/* Bouton redémarrage */}
+              {etatMachine === 'arretee' && peutChangerMode && (
+                <button onClick={redemarrerMachine}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 14px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(16,185,129,0.25)', flex: isMobile ? 1 : 'none' }}>
+                  <RotateCw size={13} />
+                  Redémarrer
+                </button>
+              )}
             </div>
-          )}
-
-          {/* Bouton arrêt d'urgence (admin + responsable) */}
-          {machineSelectionnee && etatMachine === 'en_marche' && (
-            <button onClick={() => setConfirmerArret(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(220,38,38,0.25)' }}>
-              <AlertOctagon size={13} />
-              Arrêt d'urgence
-            </button>
-          )}
-
-          {/* Bouton redémarrage (admin + responsable) */}
-          {machineSelectionnee && etatMachine === 'arretee' && peutChangerMode && (
-            <button onClick={redemarrerMachine}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(16,185,129,0.25)' }}>
-              <RotateCw size={13} />
-              Redémarrer
-            </button>
           )}
         </div>
       )}

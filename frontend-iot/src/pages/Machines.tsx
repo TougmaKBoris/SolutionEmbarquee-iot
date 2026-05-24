@@ -238,7 +238,7 @@ export default function Machines() {
             {/* Selecteur source */}
             <div style={{ marginTop: 20 }}>
               <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}><Radio size={16} /> Source de données</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                 <label onClick={() => setSource('simulation')}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px', borderRadius: 8, border: '2px solid', borderColor: source === 'simulation' ? '#4F46E5' : '#E2E8F0', background: source === 'simulation' ? '#F1F5F9' : '#fff', cursor: 'pointer', transition: 'all 0.2s' }}>
                   <input type="radio" checked={source === 'simulation'} readOnly style={{ accentColor: '#4F46E5' }} />
@@ -330,35 +330,31 @@ export default function Machines() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {machines.map(m => (
-          <div key={m._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '16px 20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+          <div key={m._id} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', background: '#fff', borderRadius: 12, padding: '16px 20px', border: '1px solid #E2E8F0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', gap: isMobile ? 10 : 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 42, height: 42, borderRadius: 10, background: m.statut === 'en_ligne' ? '#10B981' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+              <div style={{ width: 42, height: 42, borderRadius: 10, background: m.statut === 'en_ligne' ? '#10B981' : '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                 {m.statut === 'en_ligne' ? <Wifi size={20} /> : <WifiOff size={20} />}
               </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>{m.nom}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', background: '#F1F5F9', padding: '2px 8px', borderRadius: 4 }}>{m.code}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{m.nom}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', background: '#F1F5F9', padding: '2px 8px', borderRadius: 4, flexShrink: 0 }}>{m.code}</span>
                 </div>
-                <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>{m.capteurs.map(c => LABELS[c] || c).join(', ')}</div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: isMobile ? 'normal' : 'nowrap' }}>{m.capteurs.map(c => LABELS[c] || c).join(', ')}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
               <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, background: m.statut === 'en_ligne' ? '#ECFDF5' : '#F1F5F9', color: m.statut === 'en_ligne' ? '#10B981' : '#64748B' }}>
                 {m.statut === 'en_ligne' ? 'Connecté' : 'Déconnecté'}
               </span>
-              <button onClick={() => setMachineEdition({ id: m._id, nom: m.nom })} title="Renommer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#2563EB')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
-              >
-                <Pencil size={18} />
-              </button>
-              <button onClick={() => setConfirmerSuppression(m._id)} title="Supprimer" style={{ padding: 8, borderRadius: 8, background: 'none', color: '#64748B', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
-              >
-                <Trash2 size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => setMachineEdition({ id: m._id, nom: m.nom })} title="Renommer" style={{ padding: 8, borderRadius: 8, background: '#F8FAFC', color: '#64748B', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => setConfirmerSuppression(m._id)} title="Supprimer" style={{ padding: 8, borderRadius: 8, background: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', cursor: 'pointer' }}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           </div>
         ))}

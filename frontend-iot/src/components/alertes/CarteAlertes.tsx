@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, AlertCircle, CheckCircle, X } from 'lucide-react';
+import utiliserTailleEcran from '../../crochets/utiliserTailleEcran';
 import { Alerte } from '../../types';
 
 interface Props {
@@ -21,6 +22,7 @@ const tempsEcoule = (date: string) => {
 
 export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprimer, limite = 5, peutResoudre = true }: Props) {
   const [confirmer, setConfirmer] = useState<string | null>(null);
+  const isMobile = utiliserTailleEcran();
 
   if (alertes.length === 0) {
     return (
@@ -65,15 +67,15 @@ export default function CarteAlertes({ alertes, onResoudre, onIgnorer, onSupprim
           const critique = a.niveau === 'critique';
           return (
             <div key={a._id} style={{ padding: '10px 14px', borderRadius: '0 8px 8px 0', background: '#fff', borderLeft: `4px solid ${critique ? '#DC2626' : '#D97706'}`, borderTop: '1px solid #E2E8F0', borderRight: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    {critique ? <AlertCircle size={14} color="#DC2626" /> : <AlertTriangle size={14} color="#D97706" />}
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{a.message}</span>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: isMobile ? 8 : 0 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 2 }}>
+                    <div style={{ flexShrink: 0, marginTop: 1 }}>{critique ? <AlertCircle size={14} color="#DC2626" /> : <AlertTriangle size={14} color="#D97706" />}</div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.4 }}>{a.message}</span>
                   </div>
                   <div style={{ fontSize: 11, color: '#475569', fontWeight: 500, marginLeft: 20 }}>{a.machine_id?.nom || 'Machine'} — {tempsEcoule(a.createdAt)}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, ...(isMobile ? { width: '100%', justifyContent: 'flex-end' } : {}) }}>
                   <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 8, background: critique ? '#DC2626' : '#D97706', color: '#fff', fontWeight: 600 }}>{a.niveau}</span>
                   {peutResoudre && (
                     <>

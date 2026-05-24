@@ -96,7 +96,7 @@ a { text-decoration: none; color: inherit; }
 .en-tete-page-actions select { width: auto; min-width: 180px; }
 
 @media (max-width: 768px) {
-  .grille-stats-3 { grid-template-columns: 1fr; }
+  .grille-stats-3 { grid-template-columns: 1fr 1fr; }
   .grille-2col    { grid-template-columns: 1fr; }
   .grille-seuils  { grid-template-columns: 1fr; }
   .grille-capteur-custom { grid-template-columns: 1fr; }
@@ -106,4 +106,9 @@ a { text-decoration: none; color: inherit; }
   .en-tete-page-actions { width: 100%; }
   .en-tete-page-actions select { width: 100%; }
   .en-tete-page-actions button { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .grille-stats-3 { grid-template-columns: 1fr; }
+  .grille-valeurs-custom { grid-template-columns: 1fr; }
 }
