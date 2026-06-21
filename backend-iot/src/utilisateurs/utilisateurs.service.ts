@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -24,7 +24,14 @@ export class UtilisateursService {
 
   async create(dto: CreateUtilisateurDto) {
     const hash = await bcrypt.hash(dto.mot_de_passe, 10);
-    return this.utilisateurModel.create({ ...dto, mot_de_passe: hash });
+    try {
+      const user = await this.utilisateurModel.create({ ...dto, mot_de_passe: hash });
+      const { mot_de_passe, ...sansMotDePasse } = user.toObject();
+      return sansMotDePasse;
+    } catch (err: any) {
+      if (err.code === 11000) throw new ConflictException('Un utilisateur avec cet email existe déjà');
+      throw err;
+    }
   }
 
   async update(id: string, dto: UpdateUtilisateurDto) {

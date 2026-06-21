@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { CapteursService } from './capteurs.service';
+import { BlockchainService } from './blockchain.service';
 import { CapteurData } from './entities/capteur-data.entity';
 import { Machine } from '../machines/entities/machine.entity';
 import { Alerte } from '../alertes/entities/alerte.entity';
@@ -18,6 +19,12 @@ const mockModel = {
   exec: jest.fn().mockResolvedValue([]),
 };
 
+const mockBlockchainService = {
+  enregistrerAvecHash: jest.fn().mockResolvedValue({ type: 'temperature', valeur: 75, unite: '°C', timestamp: new Date() }),
+  verifierChaine: jest.fn().mockResolvedValue({ valide: true, blocs: 0, erreurs: [] }),
+  statsBlockchain: jest.fn().mockResolvedValue({ capteurs: [] }),
+};
+
 describe('CapteursService', () => {
   let service: CapteursService;
 
@@ -31,6 +38,7 @@ describe('CapteursService', () => {
         { provide: getModelToken(Seuil.name), useValue: mockModel },
         { provide: EmailsService, useValue: { envoyerAlerteCritique: jest.fn().mockResolvedValue(undefined) } },
         { provide: TempsReelGateway, useValue: { emitToMachine: jest.fn(), emitToAll: jest.fn() } },
+        { provide: BlockchainService, useValue: mockBlockchainService },
       ],
     }).compile();
     service = module.get<CapteursService>(CapteursService);

@@ -64,18 +64,30 @@ export default function utiliserAlertes(machineId?: string | null) {
   }, [machineId]);
 
   const resoudre = async (id: string) => {
-    await api.patch(`/alertes/${id}/resoudre`);
-    charger();
+    try {
+      await api.patch(`/alertes/${id}/resoudre`);
+      charger();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la résolution de l\'alerte.');
+    }
   };
 
   const ignorer = async (id: string) => {
-    await api.patch(`/alertes/${id}/ignorer`);
-    charger();
+    try {
+      await api.patch(`/alertes/${id}/ignorer`);
+      charger();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de l\'ignorance de l\'alerte.');
+    }
   };
 
   const supprimer = async (id: string) => {
-    await api.delete(`/alertes/${id}`);
-    charger();
+    try {
+      await api.delete(`/alertes/${id}`);
+      charger();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression de l\'alerte.');
+    }
   };
 
   return { alertes, chargement, resoudre, ignorer, supprimer, rafraichir: charger };

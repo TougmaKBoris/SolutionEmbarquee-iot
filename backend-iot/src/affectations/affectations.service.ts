@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Affectation, AffectationDocument } from './entities/affectation.entity';
@@ -13,6 +13,9 @@ export class AffectationsService {
   }
 
   async create(dto: CreateAffectationDto) {
+    if (!Types.ObjectId.isValid(dto.operateur_id)) throw new BadRequestException('ID opérateur invalide');
+    if (!Types.ObjectId.isValid(dto.machine_id)) throw new BadRequestException('ID machine invalide');
+
     const operateurObjectId = new Types.ObjectId(dto.operateur_id);
     const machineObjectId = new Types.ObjectId(dto.machine_id);
 

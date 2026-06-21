@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Utilisateur } from '../types';
 import { Plus, Trash2, Shield, Wrench, User, Users, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ICONES: Record<string, any> = { admin: Shield, responsable_maintenance: Wrench, operateur: User };
 const COULEURS: Record<string, string> = { admin: '#4F46E5', responsable_maintenance: '#7C3AED', operateur: '#0891B2' };
@@ -17,14 +18,19 @@ export default function PageUtilisateurs() {
 
   const creer = async () => {
     if (!email || !mdp || !nom) return;
-    await api.post('/utilisateurs', { email, mot_de_passe: mdp, nom, role });
-    setEmail(''); setMdp(''); setNom(''); setFormulaire(false); charger();
+    try {
+      await api.post('/utilisateurs', { email, mot_de_passe: mdp, nom, role });
+      setEmail(''); setMdp(''); setNom(''); setFormulaire(false); charger();
+      toast.success('Utilisateur créé avec succès.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la création de l\'utilisateur');
+    }
   };
 
   const supprimer = async () => {
     if (!confirmerSuppression) return;
-    try { await api.delete(`/utilisateurs/${confirmerSuppression}`); setConfirmerSuppression(null); charger(); }
-    catch (err: any) { setConfirmerSuppression(null); alert(err.response?.data?.message || 'Erreur'); }
+    try { await api.delete(`/utilisateurs/${confirmerSuppression}`); setConfirmerSuppression(null); charger(); toast.success('Utilisateur supprimé.'); }
+    catch (err: any) { setConfirmerSuppression(null); toast.error(err.response?.data?.message || 'Erreur'); }
   };
 
   const utilisateurASupprimer = utilisateurs.find(u => u._id === confirmerSuppression);

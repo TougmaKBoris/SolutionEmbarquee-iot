@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CapteursController } from './capteurs.controller';
 import { CapteursService } from './capteurs.service';
+import { BlockchainService } from './blockchain.service';
 import { CapteurData, CapteurDataSchema } from './entities/capteur-data.entity';
 import { Machine, MachineSchema } from '../machines/entities/machine.entity';
 import { Alerte, AlerteSchema } from '../alertes/entities/alerte.entity';
@@ -19,7 +20,7 @@ import { EmailsModule } from '../emails/emails.module';
     EmailsModule,
   ],
   controllers: [CapteursController],
-  providers: [CapteursService],
-  exports: [CapteursService],
+  providers: [CapteursService, BlockchainService],
+  exports: [CapteursService, BlockchainService],
 })
 export class CapteursModule {}

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CapteursController } from './capteurs.controller';
 import { CapteursService } from './capteurs.service';
+import { BlockchainService } from './blockchain.service';
 
 describe('CapteursController', () => {
   let controller: CapteursController;
@@ -12,10 +13,18 @@ describe('CapteursController', () => {
     getHistoriqueByType: jest.fn().mockResolvedValue([]),
   };
 
+  const mockBlockchainService = {
+    verifierChaine: jest.fn().mockResolvedValue({ valide: true, blocs: 0, erreurs: [] }),
+    statsBlockchain: jest.fn().mockResolvedValue({ capteurs: [] }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CapteursController],
-      providers: [{ provide: CapteursService, useValue: mockCapteursService }],
+      providers: [
+        { provide: CapteursService, useValue: mockCapteursService },
+        { provide: BlockchainService, useValue: mockBlockchainService },
+      ],
     }).compile();
     controller = module.get<CapteursController>(CapteursController);
   });

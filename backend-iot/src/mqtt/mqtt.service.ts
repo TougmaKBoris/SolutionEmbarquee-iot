@@ -10,6 +10,7 @@ import { Alerte, AlerteDocument } from '../alertes/entities/alerte.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
 import { EmailsService } from '../emails/emails.service';
 import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
+import { BlockchainService } from '../capteurs/blockchain.service';
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy {
@@ -31,6 +32,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     private readonly emailsService: EmailsService,
     private readonly tempsReelGateway: TempsReelGateway,
     private readonly configService: ConfigService,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   onModuleInit() {
@@ -230,13 +232,13 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     }).exec();
     const type_donnee = (seuil as any)?.type_donnee || 'numerique';
 
-    const capteurData = await this.capteurDataModel.create({
-      machine_id: machine._id,
-      type: typeCapteur,
-      valeur: data.valeur,
-      unite: data.unite,
-      timestamp: new Date(),
-    });
+    const capteurData = await this.blockchainService.enregistrerAvecHash(
+      machine._id,
+      typeCapteur,
+      data.valeur,
+      data.unite,
+      new Date(),
+    );
 
     this.logger.debug(`[OK] Capteur ${typeCapteur}=${data.valeur}${data.unite} enregistre pour ${machine.nom}`);
 

@@ -19,6 +19,13 @@ export class CapteurData {
 
   @Prop({ default: Date.now })
   timestamp: Date;
+
+  // Blockchain — chaîne de hachage SHA-256
+  @Prop({ default: '0'.repeat(64) })
+  hash_precedent: string;
+
+  @Prop({ default: '' })
+  hash_propre: string;
 }
 
 export const CapteurDataSchema = SchemaFactory.createForClass(CapteurData);

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MqttService } from './mqtt.service';
+import { BlockchainService } from '../capteurs/blockchain.service';
 import { CapteurData, CapteurDataSchema } from '../capteurs/entities/capteur-data.entity';
 import { Machine, MachineSchema } from '../machines/entities/machine.entity';
 import { Alerte, AlerteSchema } from '../alertes/entities/alerte.entity';
@@ -17,7 +18,7 @@ import { EmailsModule } from '../emails/emails.module';
     ]),
     EmailsModule,
   ],
-  providers: [MqttService],
+  providers: [MqttService, BlockchainService],
   exports: [MqttService],
 })
 export class MqttModule {}

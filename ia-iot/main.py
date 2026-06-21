@@ -34,8 +34,12 @@ model = joblib.load(os.path.join(BASE_DIR, "random_forest_model.pkl"))
 medians = joblib.load(os.path.join(BASE_DIR, "medians.pkl"))
 features_list = joblib.load(os.path.join(BASE_DIR, "features_list.pkl"))
 
-print(f"✅ Modèle chargé — {len(features_list)} features")
-print(f"📏 Médianes : {medians}")
+# Mapping classe → index dans predict_proba (garantit l'ordre réel du modèle)
+class_indices = {int(c): i for i, c in enumerate(model.classes_)}
+
+print(f"Modele charge — {len(features_list)} features")
+print(f"Classes modele : {model.classes_} — indices : {class_indices}")
+print(f"Medianes : {medians}")
 
 # ========================================
 # CLASSES ET LABELS
@@ -91,7 +95,7 @@ def generer_causes_dynamiques(valeurs: dict, seuils: dict) -> List[dict]:
         seuil_max = seuil.get("max", 0)
 
         if valeur > seuil_max:
-            ecart = ((valeur - seuil_max) / seuil_max) * 100
+            ecart = ((valeur - seuil_max) / seuil_max) * 100 if seuil_max != 0 else 100.0
             causes.append({
                 "capteur": label,
                 "type": "depassement_haut",
@@ -103,7 +107,7 @@ def generer_causes_dynamiques(valeurs: dict, seuils: dict) -> List[dict]:
                 "description": f"{label} élevée : {valeur:.1f} {unite} (seuil max {seuil_max:.1f} {unite}) — dépassement {ecart:.0f}%"
             })
         elif valeur < seuil_min and valeur > 0:
-            ecart = ((seuil_min - valeur) / seuil_min) * 100
+            ecart = ((seuil_min - valeur) / seuil_min) * 100 if seuil_min != 0 else 100.0
             causes.append({
                 "capteur": label,
                 "type": "sous_seuil",
@@ -260,9 +264,9 @@ def predire(donnees: DonneesCapteurs):
     label = CLASSES[classe]
 
     distribution = {
-        "normal": round(float(probas[0]), 4),
-        "attention": round(float(probas[1]), 4),
-        "critique": round(float(probas[2]), 4),
+        "normal": round(float(probas[class_indices[0]]), 4),
+        "attention": round(float(probas[class_indices[1]]), 4),
+        "critique": round(float(probas[class_indices[2]]), 4),
     }
 
     info_niveau = LABELS_NIVEAU[label]

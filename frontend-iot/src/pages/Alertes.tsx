@@ -5,6 +5,7 @@ import { utiliserAuth } from '../contexte/ContexteAuthentification';
 import CarteAlertes from '../components/alertes/CarteAlertes';
 import api from '../services/api';
 import utiliserTailleEcran from '../crochets/utiliserTailleEcran';
+import toast from 'react-hot-toast';
 
 export default function PageAlertes() {
   const { utilisateur } = utiliserAuth();
@@ -35,11 +36,18 @@ export default function PageAlertes() {
 
   const isMobile = utiliserTailleEcran();
   const peutResoudre = role === 'admin' || role === 'responsable_maintenance';
+  const peutPurger = role === 'admin';
 
   const purgerTout = async () => {
-    await api.delete('/alertes/purge');
-    setConfirmPurge(false);
-    rafraichir();
+    try {
+      await api.delete('/alertes/purge');
+      setConfirmPurge(false);
+      rafraichir();
+      toast.success('Alertes supprimées.');
+    } catch (err: any) {
+      setConfirmPurge(false);
+      toast.error(err.response?.data?.message || 'Erreur lors de la suppression des alertes.');
+    }
   };
 
   return (
@@ -78,7 +86,7 @@ export default function PageAlertes() {
               {machines.map(m => <option key={m._id} value={m._id}>{m.nom}</option>)}
             </select>
           )}
-          {peutResoudre && alertes.length > 0 && (
+          {peutPurger && alertes.length > 0 && (
             <button onClick={() => setConfirmPurge(true)}
               style={{ padding: '10px 16px', background: '#DC2626', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
               Supprimer toutes les alertes

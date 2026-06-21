@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '../services/api';
+import { deconnecterSocket } from '../services/socket';
 import { Utilisateur } from '../types';
 
 interface ContexteAuth {
@@ -45,6 +46,7 @@ export function FournisseurAuth({ children }: { children: ReactNode }) {
   const deconnexion = () => {
     localStorage.removeItem('jeton');
     localStorage.removeItem('utilisateur');
+    deconnecterSocket();
     setJeton(null);
     setUtilisateur(null);
   };

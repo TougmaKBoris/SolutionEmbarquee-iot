@@ -8,6 +8,7 @@ import { Alerte, AlerteDocument } from '../alertes/entities/alerte.entity';
 import { Seuil, SeuilDocument } from '../seuils/entities/seuil.entity';
 import { EmailsService } from '../emails/emails.service';
 import { TempsReelGateway } from '../temps-reel/temps-reel.gateway';
+import { BlockchainService } from './blockchain.service';
 
 @Injectable()
 export class CapteursService {
@@ -22,6 +23,7 @@ export class CapteursService {
     @InjectModel(Seuil.name) private seuilModel: Model<SeuilDocument>,
     private readonly emailsService: EmailsService,
     private readonly tempsReelGateway: TempsReelGateway,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   private genererValeur(type: string, seuil?: any, machineId?: string): { valeur: number; unite: string } {
@@ -63,7 +65,7 @@ export class CapteursService {
       const readings = [];
       for (const type of machine.capteurs) {
         const { valeur, unite } = this.genererValeur(type, seuilsMap.get(type), machine._id.toString());
-        const data = await this.capteurDataModel.create({ machine_id: machine._id, type, valeur, unite, timestamp: new Date() });
+        const data = await this.blockchainService.enregistrerAvecHash(machine._id, type, valeur, unite, new Date());
         const type_donnee = (seuilsMap.get(type) as any)?.type_donnee || 'numerique';
         readings.push({ type, valeur, unite, timestamp: data.timestamp, type_donnee });
         await this.verifierSeuils(machine._id.toString(), machine.nom, type, valeur, unite);

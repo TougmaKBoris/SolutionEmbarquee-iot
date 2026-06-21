@@ -28,6 +28,7 @@ export default function AnalyseIA() {
   const [chargement, setChargement] = useState(true);
   const [machineSelectionneeId, setMachineSelectionneeId] = useState<string | null>(null);
   const [tendances, setTendances] = useState<any>(null);
+  const isMobile = utiliserTailleEcran();
 
   const charger = async () => {
     try {
@@ -93,7 +94,6 @@ export default function AnalyseIA() {
     critiques: triees.filter((a: any) => a.diagnostic?.niveau === 'critique').length,
   };
 
-  const isMobile = utiliserTailleEcran();
   const machineSelectionnee = triees.find((m: any) => m.machine_id === machineSelectionneeId) || triees[0];
 
   const getCouleurs = (niveau: string) => {
